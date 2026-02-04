@@ -1,0 +1,23 @@
+{
+  "name": "values-simplifier",
+  "version": "1.0.0",
+  "description": "",
+  "main": "/back/server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node ./back/server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/hearjest/Values-Simplifier.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/hearjest/Values-Simplifier/issues"
+  },
+  "homepage": "https://github.com/hearjest/Values-Simplifier#readme",
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
