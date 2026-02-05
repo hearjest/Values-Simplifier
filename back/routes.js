@@ -1,8 +1,16 @@
-const express = require('express');
+import express from 'express';
 const routes = express.Router();
+import multer from 'multer';
 
-routes.get('/', (req, res) => {
-  res.send('Hello from routes!');
+const upload = multer({ dest: 'uploads/' });
+routes.post('/upload', upload.single('img'), (req, res) => {
+  
+  console.log(req.file);
+  console.log(req.body);
+  res.json({ message: 'File uploaded successfully', file: req.file });
+
 });
 
-module.exports = routes;
+
+
+export default routes;

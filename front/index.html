@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Upload</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>File Upload</h1>
+        <form id="uploadForm" enctype="multipart/form-data">
+            <div class="upload-area">
+                <label for="fileInput" class="file-label">
+                    <span class="upload-icon">📁</span>
+                    <span class="upload-text">Choose a file or drag it here</span>
+                </label>
+                <input type="file" id="fileInput" name="img" required>
+            </div>
+            <button type="submit" class="upload-btn">Upload File</button>
+        </form>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const fileInput = document.getElementById('fileInput');
+        const message = document.getElementById('message');
+        const uploadText = document.querySelector('.upload-text');
+        
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                uploadText.textContent = e.target.files[0].name;
+            }
+        });
+        
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            
+            try {
+                const response = await fetch('/api/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                if (response.ok) {
+                    message.textContent = result.message;
+                    message.className = 'message success';
+                } else {
+                    message.textContent = result.error || 'Upload failed';
+                    message.className = 'message error';
+                }
+            } catch (error) {
+                message.textContent = 'An error occurred while uploading the file';
+                message.className = 'message error';
+            }
+        });
+        
+    </script>
+</body>
+</html>
