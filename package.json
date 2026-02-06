@@ -18,8 +18,10 @@
   },
   "homepage": "https://github.com/hearjest/Values-Simplifier#readme",
   "dependencies": {
+    "bullmq": "^5.67.3",
     "cors": "^2.8.6",
     "express": "^5.2.1",
+    "ioredis": "^5.9.2",
     "multer": "^2.0.2"
   },
   "type": "module"
