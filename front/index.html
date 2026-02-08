@@ -22,7 +22,12 @@
         <div id="message" class="message"></div>
     </div>
 
+    <script src="/socket.io/socket.io.js"></script>
     <script>
+        const socket = io();
+        socket.on("completed",(jobId)=>{
+                        console.log(" got job " +jobId+"completed")
+        })
         const form = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');
         const message = document.getElementById('message');
@@ -48,6 +53,8 @@
                 if (response.ok) {
                     message.textContent = result.message;
                     message.className = 'message success';
+                    socket.emit("subTo",result.jobId)
+                    
                 } else {
                     message.textContent = result.error || 'Upload failed';
                     message.className = 'message error';

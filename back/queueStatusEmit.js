@@ -1,16 +1,22 @@
 import { QueueEvents } from 'bullmq';
 import IORedis from 'ioredis';
+import {getIO} from './socket_dot_io.js'
 
 const connection = new IORedis({ maxRetriesPerRequest: null });//queuevents cant reuse connection from queue.js bc block connection so DONT TOUCH
 const queueEvents = new QueueEvents('jobs', { connection });
+
+
 
 queueEvents.on('waiting', ({ jobId }) => {
     console.log(`Queue Emitter: Job ${jobId} is waiting to be processed!`);
 });
 
 queueEvents.on('completed', ({ jobId }) => {
+  let io = getIO();
   // Called every time a job is completed in any worker.
   console.log(`Queue Emitter: Job ${jobId} completed!`);
+  console.log(jobId)
+  io.to(`Job:${jobId}`).emit("completed",jobId)
 });
 
 queueEvents.on('failed',({jobId,failedReason})=>{
