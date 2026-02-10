@@ -11,12 +11,12 @@ queueEvents.on('waiting', ({ jobId }) => {
     console.log(`Queue Emitter: Job ${jobId} is waiting to be processed!`);
 });
 
-queueEvents.on('completed', ({ jobId }) => {
+queueEvents.on('completed', ({ jobId, returnvalue }) => {
   let io = getIO();
   // Called every time a job is completed in any worker.
   console.log(`Queue Emitter: Job ${jobId} completed!`);
-  console.log(jobId)
-  io.to(`Job:${jobId}`).emit("completed",jobId)
+  console.log(`path is ${returnvalue.path}`)
+  io.to(`Job:${jobId}`).emit("completed",{jobId, path: returnvalue.path})
 });
 
 queueEvents.on('failed',({jobId,failedReason})=>{

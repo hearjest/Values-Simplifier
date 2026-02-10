@@ -25,8 +25,12 @@
     <script src="/socket.io/socket.io.js"></script>
     <script>
         const socket = io();
-        socket.on("completed",(jobId)=>{
-                        console.log(" got job " +jobId+"completed")
+        socket.on("completed",({jobId, path})=>{
+                        console.log(" got job " + jobId + " completed")
+                        console.log("job path is ", path)
+                        // Now you can use the path to display the image
+                        const img = document.createElement('img'); img.src = path;
+                        document.getElementById('message').append(img)
         })
         const form = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');

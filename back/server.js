@@ -16,7 +16,7 @@ initialize(httpServer)
 let io = getIO();
 import './queueStatusEmit.js'
 httpServer.listen(PORT,()=>{
-  console.log("listening. using httpServer. ")
+  console.log("listening. using httpServer. go to http://localhost:3000/")
 })
 
 io.on("connection",(socket)=>{
@@ -29,4 +29,5 @@ io.on("connection",(socket)=>{
 
 app.use(cors());
 app.use(express.static(path.join(__dirname, '../front')));
+app.use('/temp2', express.static(path.join(__dirname, '../temp2')));
 app.use('/api', routes);
