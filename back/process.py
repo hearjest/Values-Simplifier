@@ -6,6 +6,7 @@ from redis import Redis
 from bullmq import Worker, Job
 import shade_clustering
 import os
+import requests
 
 async def process(job, token):
     """Process image jobs from the queue"""
@@ -19,7 +20,7 @@ async def process(job, token):
     
 
     
-    return {"status": "completed", "jobId": job.id,"path":res['clustered_gray']}
+    return {"status": "completed", "jobId": job.id,"path":res['clustered_gray'],"original_path":res['input']}
 
 async def main():
     shutdown_event = asyncio.Event()

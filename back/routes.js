@@ -6,18 +6,19 @@ import {v4 as uuidv4} from 'uuid';
 import path from 'path';
 import fs from 'fs/promises';
 import {reg,login,verifyToken} from './auth/UserFunctions.js'
+import {addJob} from './db.js'
+import {jwtDecode} from 'jwt-decode'
 const mem = multer.memoryStorage();
 const upload = multer({ storage: mem });
 
 
 routes.post('/login', login, async (req,res)=>{
   try{
-    // Set secure HTTP-only cookie with SameSite
     res.cookie('authToken', req.token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'strict',
-      maxAge: 30 * 60 * 1000, // 30 minutes
+      maxAge: 30 * 60 * 1000,
       path: '/'
     });
     res.json({message: "Login successful", success: true});
@@ -41,7 +42,6 @@ routes.post('/reg', reg, async (req,res)=>{
 })
 
 routes.get('/getFiles', verifyToken, async (req,res)=>{
-  // Protected route - only accessible with valid cookie
   res.json({message: "Files endpoint", user: req.user});
 })
 
@@ -62,6 +62,8 @@ routes.post('/upload', verifyToken, upload.single('img'), async (req, res) => {
     const uid=uuidv4();
       const tempPath= path.join('./temp', `${uid}-${req.file.originalname}`);
       await fs.writeFile(tempPath, req.file.buffer);
+      const id = jwtDecode(req.cookies.authToken).id
+      await addJob(uid,id,tempPath)
       const job = await dq.add('process-image',
         {filePath:tempPath,
           fileName:req.file.originalname,

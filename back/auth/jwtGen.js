@@ -16,4 +16,6 @@ function checkToken(token){
     return jwt.verify(token, process.env.JWT_SECRET)
 }
 
+
+
 export {checkToken,generateToken}

@@ -16,18 +16,7 @@ sql`SELECT version()`
     console.error('Postgres: Connection failed:', err.message)
   })
 
- async function makeTable(){
-     try{
-    await sql`CREATE TABLE users (id SERIAL PRIMARY KEY,
-name VARCHAR(100),
-password VARCHAR(100),
-token VARCHAR(1000),
-token_time TIMESTAMP DEFAULT CURRENT_TIMESTAMP)`
-    console.log("mayybe made table")
-  }catch(err){
-    console.error("failed to make talbe")
-  }
- }
+
 
  /**
   * @param {String} userName
@@ -82,7 +71,35 @@ async function isAUser(userNameEntered){
     return false;
   }
 }
+/**
+ * @param {Integer} uid
+ * @param {Integer} id
+ * @param {String} jobPath
+ */
+async function addJob(uid,id,jobPath){
+  try{
+    let res = await sql`INSERT INTO jobs (id,user_id,status,original_path) VALUES(${uid},${id},${"queued"},${jobPath})`
+    console.log(res);
+    return res.length > 0;
+  }catch(err){
+    console.error("Error in isAUser:", err)
+    return false;
+  }
+}
+/**
+ * @param {String} original_Path
+ * @param {String} processed_Path
+ */
+async function updateJob(original_Path,processed_Path){
+  try{
+    let res = await sql`UPDATE jobs SET status=${'complete'}, processed_path=${processed_Path}, finished_at=now() WHERE original_path=${original_Path}`
+    console.log(res);
+    return res.length > 0;
+  }catch(err){
+    console.error("Error in isAUser:", err)
+    return false;
+  }
+}
 
 
-
-  export {getUser,isAUser,createUser}
+  export {getUser,isAUser,createUser,addJob,updateJob}
