@@ -7,12 +7,33 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <div class="container">
-        <h1>File Upload</h1>
+    <div id="authContainer" class="container">
+        <h1>Login</h1>
+        <form id="loginForm">
+            <input type="text" id="loginUsername" placeholder="Username" required>
+            <input type="password" id="loginPassword" placeholder="Password" required>
+            <button type="submit">Login</button>
+        </form>
+        <p>Don't have an account? <a href="#" id="showRegister">Register</a></p>
+
+        <form id="registerForm" style="display:none;">
+            <h1>Register</h1>
+            <input type="text" id="regUsername" placeholder="Username" required>
+            <input type="password" id="regPassword" placeholder="Password" required>
+            <button type="submit">Register</button>
+        </form>
+        <p style="display:none;"><a href="#" id="showLogin">Back to Login</a></p>
+        <div id="authMessage" class="message"></div>
+    </div>
+
+    <div id="uploadContainer" class="container" style="display:none;">
+        <div class="header-with-logout">
+            <h1>File Upload</h1>
+            <button type="button" id="logoutBtn">Logout</button>
+        </div>
         <form id="uploadForm" enctype="multipart/form-data">
             <div class="upload-area">
                 <label for="fileInput" class="file-label">
-                    <span class="upload-icon">📁</span>
                     <span class="upload-text">Choose a file or drag it here</span>
                 </label>
                 <input type="file" id="fileInput" name="img" required>
@@ -24,6 +45,119 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
+        const authContainer = document.getElementById('authContainer');
+        const uploadContainer = document.getElementById('uploadContainer');
+        const loginForm = document.getElementById('loginForm');
+        const registerForm = document.getElementById('registerForm');
+        const authMessage = document.getElementById('authMessage');
+        const showRegister = document.getElementById('showRegister');
+        const showLogin = document.getElementById('showLogin');
+        const logoutBtn = document.getElementById('logoutBtn');
+         checkAuthStatus();
+
+        async function checkAuthStatus() {
+            try {
+                const response = await fetch('/api/getFiles', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                if (response.ok) {
+                    showUploadSection();
+                }
+            } catch (error) {
+                console.error(error)
+            }
+        }
+        showRegister.addEventListener('click', (e) => {
+            e.preventDefault();
+            loginForm.style.display = 'none';
+            showRegister.parentElement.style.display = 'none';
+            registerForm.style.display = 'block';
+            showLogin.parentElement.style.display = 'block';
+        });
+
+        showLogin.addEventListener('click', (e) => {
+            e.preventDefault();
+            registerForm.style.display = 'none';
+            showLogin.parentElement.style.display = 'none';
+            loginForm.style.display = 'block';
+            showRegister.parentElement.style.display = 'block';
+        });
+
+        loginForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userName = document.getElementById('loginUsername').value;
+            const password = document.getElementById('loginPassword').value;
+
+            try {
+                const response = await fetch('/api/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userName, password })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    showUploadSection();
+                } else {
+                    authMessage.textContent = result.message || 'Login failed';
+                    authMessage.className = 'message error';
+                }
+            } catch (error) {
+                authMessage.textContent = 'Login error';
+                authMessage.className = 'message error';
+            }
+        });
+
+        registerForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const userName = document.getElementById('regUsername').value;
+            const password = document.getElementById('regPassword').value;
+
+            try {
+                const response = await fetch('/api/reg', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({ userName, password })
+                });
+
+                const result = await response.json();
+                if (response.ok && result.success) {
+                    authMessage.textContent = 'Registered! Please login.';
+                    authMessage.className = 'message success';
+                    setTimeout(() => showLogin.click(), 1500);
+                } else {
+                    authMessage.textContent = result.message || 'Registration failed';
+                    authMessage.className = 'message error';
+                }
+            } catch (error) {
+                authMessage.textContent = 'Registration error';
+                authMessage.className = 'message error';
+            }
+        });
+
+        // Logout
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await fetch('/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+            } catch (error) {
+                console.error('Logout error:', error);
+            }
+            authContainer.style.display = 'block';
+            uploadContainer.style.display = 'none';
+        });
+
+        function showUploadSection() {
+            authContainer.style.display = 'none';
+            uploadContainer.style.display = 'block';
+        }
+
+        // Socket.io for upload status
         const socket = io();
         socket.on("completed",({jobId, path})=>{
                         console.log(" got job " + jobId + " completed")
@@ -50,6 +184,7 @@
             try {
                 const response = await fetch('/api/upload', {
                     method: 'POST',
+                    credentials: 'include',
                     body: formData
                 });
                 
@@ -60,7 +195,7 @@
                     socket.emit("subTo",result.jobId)
                     
                 } else {
-                    message.textContent = result.error || 'Upload failed';
+                    message.textContent = result.message || 'Upload failed';
                     message.className = 'message error';
                 }
             } catch (error) {

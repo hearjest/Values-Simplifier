@@ -95,7 +95,95 @@ input[type="file"] {
     border-radius: 8px;
     text-align: center;
     font-size: 14px;
-    display: none;
+}
+
+.message.success {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+}
+
+.message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+/* Login/Register Form Styles */
+#loginForm, #registerForm {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#loginForm input, #registerForm input {
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+    transition: border-color 0.3s;
+}
+
+#loginForm input:focus, #registerForm input:focus {
+    outline: none;
+    border-color: #667eea;
+}
+
+#loginForm button, #registerForm button {
+    padding: 12px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+#loginForm button:hover, #registerForm button:hover {
+    transform: translateY(-2px);
+}
+
+#authContainer p {
+    text-align: center;
+    margin-top: 15px;
+    color: #666;
+}
+
+#authContainer a {
+    color: #667eea;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+#authContainer a:hover {
+    text-decoration: underline;
+}
+
+#logoutBtn {
+    padding: 8px 16px;
+    background: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+#logoutBtn:hover {
+    background: #c82333;
+}
+
+.header-with-logout {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.header-with-logout h1 {
+    margin: 0;
 }
 
 .message:not(:empty) {
@@ -112,4 +200,10 @@ input[type="file"] {
     background: #f8d7da;
     color: #721c24;
     border: 1px solid #f5c6cb;
+}
+
+
+img {
+    height:150px;
+    width:150px;
 }

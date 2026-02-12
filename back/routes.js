@@ -5,12 +5,59 @@ import dq from './queue.js';
 import {v4 as uuidv4} from 'uuid';
 import path from 'path';
 import fs from 'fs/promises';
-
+import {reg,login,verifyToken} from './auth/UserFunctions.js'
 const mem = multer.memoryStorage();
 const upload = multer({ storage: mem });
 
 
-routes.post('/upload', upload.single('img'), async (req, res) => {
+routes.post('/login', login, async (req,res)=>{
+  try{
+    // Set secure HTTP-only cookie with SameSite
+    res.cookie('authToken', req.token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 30 * 60 * 1000, // 30 minutes
+      path: '/'
+    });
+    res.json({message: "Login successful", success: true});
+  }catch(err){
+    console.log(err)
+    res.status(500).json({message:"failed login"})
+  }
+})
+
+routes.post('/reg', reg, async (req,res)=>{
+  try{
+    if(req.message == "registered"){
+      res.json({message:"registered", success: true});
+    }else{
+      res.json({message:"User already exists", success: false});
+    }
+  }catch(err){
+    console.log(err)
+    res.status(500).json({message:"Registration failed"})
+  }
+})
+
+routes.get('/getFiles', verifyToken, async (req,res)=>{
+  // Protected route - only accessible with valid cookie
+  res.json({message: "Files endpoint", user: req.user});
+})
+
+routes.post('/logout', async (req,res)=>{
+  // Clear the auth cookie
+  res.clearCookie('authToken', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/'
+  });
+  res.json({message: "Logged out successfully", success: true});
+})
+
+
+routes.post('/upload', verifyToken, upload.single('img'), async (req, res) => {
   try{
     const uid=uuidv4();
       const tempPath= path.join('./temp', `${uid}-${req.file.originalname}`);

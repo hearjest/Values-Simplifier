@@ -4,3 +4,5 @@ temp
 temp2
 back/_pycache_
 /back/__pycache__
+.env
+.gitignore
