@@ -5,8 +5,9 @@ import cookieParser from 'cookie-parser';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import {createServer} from 'http';
-import {initialize,getIO} from './socket_dot_io.js'
-import {sql} from './dbConnection.js'
+import {initialize,getIO} from './comm/socket_dot_io.js'
+import {sql} from './comm/dbConnection.js'
+import {minioClient} from './comm/minioConn.js'
 import dotenv from 'dotenv';
 import { UserRepo } from './repos/userRep.js';
 import { jobRepo } from './repos/jobRep.js';
@@ -38,7 +39,7 @@ const userrep=new UserRepo(sql);
 const jobrep=new jobRepo(sql);
 const auth=new generalAuth(userrep);
 const jobs=new Job(jobrep);
-const queueEventEmitter=new queueEventEmits(jobrep);
+const queueEventEmitter=new queueEventEmits(jobrep,minioClient);
 app.use(cors({
   origin: 'http://localhost:3000',
   credentials: true

@@ -65,13 +65,10 @@ function makeRoutes(auth,jobs){
     try{
         console.log('req.user:', req.user);
         console.log('userId:', req.user?.id);
-        
-        const userId = req.user.id; // from verifyToken middleware
-        
+        const userId = req.user.id;
         if(!userId) {
           return res.status(401).json({ message: 'User ID not found in token' });
         }
-        
         let job = await jobs.createJob(
           userId,
           req.file.buffer,

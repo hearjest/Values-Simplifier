@@ -1,4 +1,4 @@
-import dq from '../queue.js'
+import dq from '../comm/queue.js'
 import {v4 as uuidv4} from 'uuid';
 import path from 'path';
 import fs from 'fs/promises';
@@ -7,7 +7,12 @@ class Job{
     constructor(jobRep){
         this.jobRep =jobRep;
     }
-
+    /**
+     * @param {Integer} userId 
+     * @param {Buffer} fileBuffer
+     * @param {String} originalName - the file name of img
+     * 
+     */
     async createJob(userId, fileBuffer, originalName, metadata){
         console.log('Job.createJob called with:');
         console.log('  userId:', userId);
@@ -25,7 +30,8 @@ class Job{
         {filePath:pathForWorker,
           fileName:originalName,
           uid: uuid,
-          meta:metadata
+          meta:metadata,
+          userId:userId
         })
 
         return {jobId:job.id}

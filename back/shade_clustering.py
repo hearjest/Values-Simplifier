@@ -170,10 +170,10 @@ def cluster_shades(
     idx_path = os.path.join(out_dir, f"{base}_clustered_index.png")
     meta_path = os.path.join(out_dir, f"{base}_cluster_meta.json")
     
-    web_gray_path = f"/temp2/{base}_clustered_gray.png"
+    web_gray_path = f"./temp2/{base}_clustered_gray.png"
 
     cv2.imwrite(gray_path, gray_clustered)
-    cv2.imwrite(idx_path, index_img)
+    #cv2.imwrite(idx_path, index_img)
 
 
     meta = {
@@ -185,5 +185,5 @@ def cluster_shades(
         "cluster_centers_L": [float(c) for c in centers],
         "segment_counts": [int(c) for c in counts.tolist()],
     }
-
+    print("finished processing image")
     return meta

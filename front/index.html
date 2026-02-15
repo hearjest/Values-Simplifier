@@ -159,11 +159,11 @@
 
         // Socket.io for upload status
         const socket = io();
-        socket.on("completed",({jobId, path})=>{
+        socket.on("completed",({jobId, url})=>{
                         console.log(" got job " + jobId + " completed")
-                        console.log("job path is ", path)
+                        console.log("job url is ", url)
                         // Now you can use the path to display the image
-                        const img = document.createElement('img'); img.src = path;
+                        const img = document.createElement('img'); img.src = url;
                         document.getElementById('message').append(img)
         })
         const form = document.getElementById('uploadForm');
