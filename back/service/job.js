@@ -18,20 +18,21 @@ class Job{
         console.log('  userId:', userId);
         console.log('  originalName:', originalName);
         console.log('  metadata:', metadata);
-        
+        console.log("job type",metadata.method)
         let uuid = uuidv4();
         const pathForWorker=path.join('./temp', `${uuid}-${originalName}`);
         const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
         await fs.writeFile(pathForStorage, fileBuffer);
-        
+        const jobType=metadata.method
         console.log('About to call addJob with:', {uuid, userId, pathForWorker});
-        await this.jobRep.addJob(uuid, userId, pathForWorker);
+        await this.jobRep.addJob(uuid, userId, pathForWorker,jobType|null);
         const job =await dq.add('process-image',
         {filePath:pathForWorker,
           fileName:originalName,
           uid: uuid,
           meta:metadata,
-          userId:userId
+          userId:userId,
+          jobType:jobType
         })
 
         return {jobId:job.id}

@@ -134,19 +134,12 @@ def cluster_shades(
     auto_method: str = "silhouette",
     k_max: int = 8
 ) -> Dict[str, Any]:
-    """
-    Main function: clusters perceived shading and writes outputs.
-
-    Returns a metadata dict with paths and cluster info.
-    """
-    print("is this even working")
     ensure_dir(out_dir)
     img_rgb = load_image_rgb(input_path, max_dim=max_dim)
     denoised = bilateral_denoise(img_rgb)
     lab = rgb_to_lab(denoised)
     segments = compute_superpixels(denoised, n_segments=n_segments, compactness=compactness)
     feats, counts = superpixel_mean_L(lab, segments)
-    print("down here!")
     if n_shades is not None and n_shades >= 1:
         k = int(max(1, n_shades))
     else:
@@ -154,28 +147,21 @@ def cluster_shades(
             k = choose_k_silhouette(feats, k_min=2, k_max=k_max)
         else:
             k = choose_k_by_quantiles(feats, n_bins=k_max)
-
     if k <= 1:
         seg_labels = np.zeros((feats.shape[0],), dtype=np.int32)
         centers = np.array([float(feats[:, 0].mean())])
     else:
         seg_labels, centers = cluster_kmeans(feats, n_clusters=k)
-
     cluster_map = build_cluster_map(segments, seg_labels)
     gray_clustered = cluster_to_grayscale_image(cluster_map, centers)
     index_img = cluster_index_image(cluster_map)
-
     base = os.path.splitext(os.path.basename(input_path))[0]
     gray_path = os.path.join(out_dir, f"{base}_clustered_gray.png")
     idx_path = os.path.join(out_dir, f"{base}_clustered_index.png")
     meta_path = os.path.join(out_dir, f"{base}_cluster_meta.json")
-    
-    web_gray_path = f"./temp2/{base}_clustered_gray.png"
-
+    web_gray_path = f"../temp2/{base}_clustered_gray.png"
     cv2.imwrite(gray_path, gray_clustered)
     #cv2.imwrite(idx_path, index_img)
-
-
     meta = {
         "input": input_path,
         "clustered_gray": web_gray_path,
@@ -185,5 +171,4 @@ def cluster_shades(
         "cluster_centers_L": [float(c) for c in centers],
         "segment_counts": [int(c) for c in counts.tolist()],
     }
-    print("finished processing image")
     return meta

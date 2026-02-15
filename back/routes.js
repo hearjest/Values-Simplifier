@@ -73,7 +73,7 @@ function makeRoutes(auth,jobs){
           userId,
           req.file.buffer,
           req.file.originalname,
-          req.body
+          req.body,
         );
         res.json({ message: 'img in queue now', jobId: job.jobId });
     }catch(e){

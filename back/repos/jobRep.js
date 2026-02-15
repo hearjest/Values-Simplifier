@@ -3,7 +3,7 @@ class jobRepo{
         this.sql = dbConnection
     }
 
-    async addJob(uid,id,jobPath){
+    async addJob(uid,id,jobPath,jobType){
         console.log('jobRepo.addJob called with:');
         console.log('  uid:', uid, 'type:', typeof uid);
         console.log('  id:', id, 'type:', typeof id);

@@ -2,8 +2,7 @@ node_modules
 uploads
 temp
 temp2
-back/_pycache_
-/back/__pycache__
 .env
 .gitignore
 deprecated
+*__pycache__
