@@ -47,6 +47,7 @@
             <button type="submit" class="upload-btn">Upload File</button>
         </form>
         <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
+        <div id="imgBox"></div>
         <div id="message" class="message"></div>
     </div>
 
@@ -60,21 +61,26 @@
         const showRegister = document.getElementById('showRegister');
         const showLogin = document.getElementById('showLogin');
         const logoutBtn = document.getElementById('logoutBtn');
-         checkAuthStatus();
 
-        async function checkAuthStatus() {
+        checkAuthStatus();
+
+        async function checkAuthStatus(){
             try {
-                const response = await fetch('/api/getFiles', {
-                    method: 'GET',
+                const res = await fetch('/api/checkToken',{
+                    method:'GET',
                     credentials: 'include'
                 });
-                if (response.ok) {
-                    showUploadSection();
+                if (res.ok) {
+                    const result = await res.json();
+                    if (result.success) {
+                        showUploadSection();
+                    }
                 }
-            } catch (error) {
-                console.error(error)
+            }catch(error){
+                console.log(error)
             }
         }
+
         showRegister.addEventListener('click', (e) => {
             e.preventDefault();
             loginForm.style.display = 'none';
@@ -159,23 +165,30 @@
             uploadContainer.style.display = 'none';
         });
 
+        function addImgToBox(imgBox,link){
+            let img=document.createElement('img');
+            img.src=link
+            imgBox.append(img)
+        }
+
         // Get Files
         const getFilesBtn = document.getElementById('getFilesBtn');
         getFilesBtn.addEventListener('click', async () => {
             try {
                 const response = await fetch('/api/getFiles', {
                     method: 'GET',
-                    credentials: 'include',
-                    body:JSON.stringify({user:3})
+                    credentials: 'include'
                 });
-                const result = await response.json();
-                console.log('Files response:', result);
-                message.textContent = JSON.stringify(result, null, 2);
-                message.className = 'message success';
+                const res = await response.json();
+                let imgBox = document.getElementById('imgBox')
+                for (let i=0;i<res.result.length;i++){
+                    const link = res.result[i]
+                    addImgToBox(imgBox,link);
+                }
+
+                
             } catch (error) {
-                console.error('Get files error:', error);
-                message.textContent = 'Error fetching files';
-                message.className = 'message error';
+                console.error(error)
             }
         });
 
@@ -184,14 +197,14 @@
             uploadContainer.style.display = 'block';
         }
 
-        // Socket.io for upload status
         const socket = io();
         socket.on("completed",({jobId, url})=>{
                         console.log(" got job " + jobId + " completed")
                         console.log("job url is ", url)
-                        // Now you can use the path to display the image
                         const img = document.createElement('img'); img.src = url;
                         document.getElementById('message').append(img)
+                        let imgBox=document.getElementId('imgBox')
+                        addImgToBox(imgBox,url)
         })
         const form = document.getElementById('uploadForm');
         const fileInput = document.getElementById('fileInput');

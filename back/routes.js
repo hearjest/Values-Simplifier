@@ -8,6 +8,11 @@ const upload = multer({ storage: mem });
 function makeRoutes(auth,jobs){
   const routes = express.Router();
 
+
+  routes.get('/checkToken', verifyToken, async(req,res)=>{
+    res.status(200).json({ success: true, user: req.user });
+  });
+
   routes.post('/login', async (req,res)=>{
     try{
       const {userName, password}=req.body;

@@ -2,7 +2,8 @@ import dq from '../comm/queue.js'
 import {v4 as uuidv4} from 'uuid';
 import path from 'path';
 import fs from 'fs/promises';
-
+import dotenv from 'dotenv';
+dotenv.config();
 class Job{
     constructor(jobRep,minioClient){
         this.jobRep =jobRep;
@@ -34,7 +35,18 @@ class Job{
 
     async getImagesForUser(userId){
         const paths = await this.jobRep.getJobsForUser(userId);
-        console.log(paths)
+        const urls=[];
+        let url=null;
+        for(let i=0;i<paths.length;i++){
+            try{
+                let status=await this.minioClient.statObject(process.env.MINIO_BUCKET1,paths[i]['processed_path']);
+                url = await this.minioClient.presignedUrl("GET",process.env.MINIO_BUCKET1,paths[i]['processed_path'],1800)
+                urls.push(url)
+            }catch(err){
+                continue;
+            }
+        }
+        return urls;
     }
 }
 
