@@ -26,29 +26,40 @@
         <div id="authMessage" class="message"></div>
     </div>
 
+    <div id="imgCloseUp" style="display:none;">
+        <img src="//:0" id="closeUp" style="display:none;">
+    </div>
+
     <div id="uploadContainer" class="container" style="display:none;">
         <div class="header-with-logout">
             <h1>File Upload</h1>
             <button type="button" id="logoutBtn">Logout</button>
         </div>
-        <form id="uploadForm" enctype="multipart/form-data">
-            <div class="upload-area">
-                <label for="fileInput" class="file-label">
-                    <span class="upload-text">Choose a file or drag it here</span>
-                </label>
-                <input type="file" id="fileInput" name="img" required>
+        <div class="main-layout">
+            <div class="upload-section">
+                <form id="uploadForm" enctype="multipart/form-data">
+                    <div class="upload-area">
+                        <label for="fileInput" class="file-label">
+                            <span class="upload-text">Choose a file or drag it here</span>
+                        </label>
+                        <input type="file" id="fileInput" name="img" required>
+                    </div>
+                    <label for="method">Method:</label>
+                    <select id="method" name="method" required>
+                        <option value="kMeans" selected>kMeans</option>
+                        <option value="jobtype2">jobtype2</option>
+                        <option value="jobtype3">jobtype3</option>
+                    </select>
+                    <button type="submit" class="upload-btn">Upload File</button>
+                </form>
+                <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
+                <div id="message" class="message"></div>
             </div>
-            <label for="method">Method:</label>
-            <select id="method" name="method" required>
-                <option value="kMeans" selected>kMeans</option>
-                <option value="jobtype2">jobtype2</option>
-                <option value="jobtype3">jobtype3</option>
-            </select>
-            <button type="submit" class="upload-btn">Upload File</button>
-        </form>
-        <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
-        <div id="imgBox"></div>
-        <div id="message" class="message"></div>
+            <div class="images-section">
+                <h2>Processed Images</h2>
+                <div id="imgBox"></div>
+            </div>
+        </div>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
@@ -61,7 +72,8 @@
         const showRegister = document.getElementById('showRegister');
         const showLogin = document.getElementById('showLogin');
         const logoutBtn = document.getElementById('logoutBtn');
-
+        const closeUpBackground=document.getElementById('imgCloseUp');
+        const closeUpImg=document.getElementById('closeUp')
         checkAuthStatus();
 
         async function checkAuthStatus(){
@@ -151,7 +163,6 @@
             }
         });
 
-        // Logout
         logoutBtn.addEventListener('click', async () => {
             try {
                 await fetch('/api/logout', {
@@ -164,46 +175,63 @@
             authContainer.style.display = 'block';
             uploadContainer.style.display = 'none';
         });
-
+        closeUpBackground.addEventListener('click',()=>{
+                    closeUpBackground.style.display='none';
+                    closeUpImg.style.display='none';
+                })
+        closeUp.addEventListener('click',()=>{
+            window.open(closeUp.src)
+        })
         function addImgToBox(imgBox,link){
             let img=document.createElement('img');
             img.src=link
+            img.addEventListener('click',()=>{
+                closeUpBackground.style.display='flex'
+                closeUpBackground.style.width='100%';
+                closeUpImg.style.display='block';
+                closeUpImg.src=link;
+                closeUpImg.target="_blank"
+            })
             imgBox.append(img)
         }
 
-        // Get Files
-        const getFilesBtn = document.getElementById('getFilesBtn');
-        getFilesBtn.addEventListener('click', async () => {
+        async function loadUserImages() {
             try {
                 const response = await fetch('/api/getFiles', {
                     method: 'GET',
                     credentials: 'include'
                 });
                 const res = await response.json();
-                let imgBox = document.getElementById('imgBox')
-                for (let i=0;i<res.result.length;i++){
-                    const link = res.result[i]
-                    addImgToBox(imgBox,link);
+                let imgBox = document.getElementById('imgBox');
+                imgBox.innerHTML = '';
+                if (res.result && res.result.length > 0) {
+                    for (let i = 0; i < res.result.length; i++) {
+                        const link = res.result[i];
+                        addImgToBox(imgBox, link);
+                    }
                 }
-
-                
             } catch (error) {
-                console.error(error)
+                console.error('Error loading images:', error);
             }
-        });
+        }
+        const getFilesBtn = document.getElementById('getFilesBtn');
+        getFilesBtn.addEventListener('click', loadUserImages);
 
         function showUploadSection() {
             authContainer.style.display = 'none';
             uploadContainer.style.display = 'block';
+            loadUserImages();
         }
+
+        
 
         const socket = io();
         socket.on("completed",({jobId, url})=>{
                         console.log(" got job " + jobId + " completed")
                         console.log("job url is ", url)
                         const img = document.createElement('img'); img.src = url;
-                        document.getElementById('message').append(img)
-                        let imgBox=document.getElementId('imgBox')
+                        uploadContainer.append(img)
+                        let imgBox=document.getElementById('imgBox')
                         addImgToBox(imgBox,url)
         })
         const form = document.getElementById('uploadForm');
@@ -214,6 +242,8 @@
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
                 uploadText.textContent = e.target.files[0].name;
+            } else {
+                uploadText.textContent = 'Choose a file or drag it here';
             }
         });
         
