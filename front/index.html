@@ -46,6 +46,7 @@
             </select>
             <button type="submit" class="upload-btn">Upload File</button>
         </form>
+        <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
         <div id="message" class="message"></div>
     </div>
 
@@ -156,6 +157,26 @@
             }
             authContainer.style.display = 'block';
             uploadContainer.style.display = 'none';
+        });
+
+        // Get Files
+        const getFilesBtn = document.getElementById('getFilesBtn');
+        getFilesBtn.addEventListener('click', async () => {
+            try {
+                const response = await fetch('/api/getFiles', {
+                    method: 'GET',
+                    credentials: 'include',
+                    body:JSON.stringify({user:3})
+                });
+                const result = await response.json();
+                console.log('Files response:', result);
+                message.textContent = JSON.stringify(result, null, 2);
+                message.className = 'message success';
+            } catch (error) {
+                console.error('Get files error:', error);
+                message.textContent = 'Error fetching files';
+                message.className = 'message error';
+            }
         });
 
         function showUploadSection() {

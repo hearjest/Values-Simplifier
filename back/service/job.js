@@ -4,8 +4,9 @@ import path from 'path';
 import fs from 'fs/promises';
 
 class Job{
-    constructor(jobRep){
+    constructor(jobRep,minioClient){
         this.jobRep =jobRep;
+        this.minioClient=minioClient;
     }
     /**
      * @param {Integer} userId 
@@ -14,17 +15,11 @@ class Job{
      * 
      */
     async createJob(userId, fileBuffer, originalName, metadata){
-        console.log('Job.createJob called with:');
-        console.log('  userId:', userId);
-        console.log('  originalName:', originalName);
-        console.log('  metadata:', metadata);
-        console.log("job type",metadata.method)
         let uuid = uuidv4();
         const pathForWorker=path.join('./temp', `${uuid}-${originalName}`);
         const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
         await fs.writeFile(pathForStorage, fileBuffer);
         const jobType=metadata.method
-        console.log('About to call addJob with:', {uuid, userId, pathForWorker});
         await this.jobRep.addJob(uuid, userId, pathForWorker,jobType|null);
         const job =await dq.add('process-image',
         {filePath:pathForWorker,
@@ -34,8 +29,12 @@ class Job{
           userId:userId,
           jobType:jobType
         })
-
         return {jobId:job.id}
+    }
+
+    async getImagesForUser(userId){
+        const paths = await this.jobRep.getJobsForUser(userId);
+        console.log(paths)
     }
 }
 

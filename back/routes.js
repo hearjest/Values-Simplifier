@@ -12,7 +12,6 @@ function makeRoutes(auth,jobs){
     try{
       const {userName, password}=req.body;
       const result = await auth.login(userName, password);
-      
       if(!result || !result.token){
         return res.status(401).json({message: "Invalid username or password", success: false});
       }
@@ -47,7 +46,9 @@ function makeRoutes(auth,jobs){
   })
 
   routes.get('/getFiles', verifyToken, async (req,res)=>{
-    res.json({message: "Files endpoint", user: req.user});
+    const result = await jobs.getImagesForUser(req.user.id);
+
+    res.json({message: "Files endpoint", user: req.user, result:result});
   })
 
   routes.post('/logout', async (req,res)=>{

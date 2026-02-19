@@ -19,8 +19,8 @@ class jobRepo{
     }
 
     async getJobsForUser(userId){
-        let res = this.sql`SELECT * FROM jobs WHERE user_id = ${userId}`
-        return res[0]
+        let res = await this.sql`SELECT processed_path FROM jobs WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`
+        return res
     }
 
 }

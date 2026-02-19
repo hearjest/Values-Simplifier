@@ -38,7 +38,7 @@ io.on("connection",(socket)=>{
 const userrep=new UserRepo(sql);
 const jobrep=new jobRepo(sql);
 const auth=new generalAuth(userrep);
-const jobs=new Job(jobrep);
+const jobs=new Job(jobrep,minioClient);
 const queueEventEmitter=new queueEventEmits(jobrep,minioClient);
 app.use(cors({
   origin: 'http://localhost:3000',

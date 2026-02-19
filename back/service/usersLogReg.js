@@ -16,7 +16,6 @@ class generalAuth{
             return null
         }
 
-        // Check password
         const isValid = await checkPass(password, user.password)
         if(!isValid){
             return null
