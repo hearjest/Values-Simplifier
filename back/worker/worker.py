@@ -13,8 +13,8 @@ from processMethodFactory import methodFactory
 load_dotenv();
 
 client = Minio("localhost:9000",
-    access_key=os.getenv("MINIO_USER"),
-    secret_key=os.getenv("MINIO_PASS"),
+    access_key=os.getenv("MINIO_ROOT_USER"),
+    secret_key=os.getenv("MINIO_ROOT_PASSWORD"),
     secure=False
 )
 
