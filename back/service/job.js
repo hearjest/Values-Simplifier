@@ -12,7 +12,7 @@ class Job{
     /**
      * @param {Integer} userId 
      * @param {Buffer} fileBuffer
-     * @param {String} originalName - the file name of img
+     * @param {String} originalName
      * 
      */
     async createJob(userId, fileBuffer, originalName, metadata){
@@ -37,10 +37,12 @@ class Job{
         const paths = await this.jobRep.getJobsForUser(userId);
         const urls=[];
         let url=null;
+        const publicMinioUrl = process.env.MINIO_PUBLIC_URL || 'http://localhost:9000';
+        const bucket = process.env.MINIO_BUCKET1;
         for(let i=0;i<paths.length;i++){
             try{
-                let status=await this.minioClient.statObject(process.env.MINIO_BUCKET1,paths[i]['processed_path']);
-                url = await this.minioClient.presignedUrl("GET",process.env.MINIO_BUCKET1,paths[i]['processed_path'],1800)
+                let status=await this.minioClient.statObject(bucket, paths[i]['processed_path']);
+                url = `${publicMinioUrl}/${bucket}/${paths[i]['processed_path']}`;
                 urls.push(url)
             }catch(err){
                 continue;

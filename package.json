@@ -5,7 +5,11 @@
   "main": "/back/server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node ./back/server.js ./back/queueStatusEmit.js"
+    "start": "node ./back/server.js ./back/queueStatusEmit.js",
+    "compose:up": "docker compose up",
+    "worker": "python \"./back/worker/worker.py\"",
+    "dev": "concurrently \"npm:compose:up\" \"npm:start\" "
+
   },
   "repository": {
     "type": "git",
@@ -22,6 +26,7 @@
     "@bull-board/ui": "^6.16.4",
     "bcryptjs": "^3.0.3",
     "bullmq": "^5.67.3",
+    "concurrently": "^9.2.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.2.4",

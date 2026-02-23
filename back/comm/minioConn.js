@@ -3,13 +3,20 @@ import dotenv from 'dotenv'
 
 dotenv.config();
 
-const minioClient = new Minio.Client({
-  endPoint: 'localhost',
-  port: 9000,
-  useSSL: false,
-  accessKey: process.env.MINIO_ROOT_USER,
-  secretKey: process.env.MINIO_PASS,
-})
-
+const minioClient = (()=>{
+  try{
+    return new Minio.Client({
+    endPoint: process.env.MINIO_HOST,
+    port: process.env.MINIO_PORT,
+    useSSL: false,
+    accessKey: process.env.MINIO_ROOT_USER,
+    secretKey: process.env.MINIO_ROOT_PASSWORD,
+     })
+  }catch(error){
+    console.error(error)
+    console.log("Failed to connect to minio")
+  }
+  
+})();
 
 export{minioClient}

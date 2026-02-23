@@ -13,7 +13,7 @@ function getIO(){
     if(io!=null){
         return io;
     }
-    console.error("NO IO")
+    console.error("Socket failed to connect")
     return null;
 }
 

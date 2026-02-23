@@ -15,6 +15,7 @@ import { generalAuth } from './service/usersLogReg.js';
 import { Job } from './service/job.js';
 import {queueEventEmits} from './service/queueEvent.js'
 dotenv.config();
+import {spawn} from 'child_process'
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -24,7 +25,7 @@ initialize(httpServer)
 
 let io = getIO();
 httpServer.listen(PORT,()=>{
-  console.log("listening. using httpServer. go to http://localhost:3000/")
+  console.log("listening. using httpServer. go to http://localhost:3000/ . Waait for Worker and docker containers to come online")
 })
 
 io.on("connection",(socket)=>{
@@ -41,7 +42,7 @@ const auth=new generalAuth(userrep);
 const jobs=new Job(jobrep,minioClient);
 const queueEventEmitter=new queueEventEmits(jobrep,minioClient);
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: ""+process.env.SERVER_HOST+':'+process.env.PORT,
   credentials: true
 }));
 app.use(cookieParser());

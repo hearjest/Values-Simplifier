@@ -1,0 +1,9 @@
+bullmq==2.19.4
+python-dotenv==1.2.1
+minio==7.2.20
+numpy==2.2.6
+Pillow==11.3.0
+opencv-python-headless==4.13.0.92
+scikit-image==0.25.2
+scikit-learn==1.7.2
+redis==6.4.0
