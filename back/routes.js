@@ -88,6 +88,23 @@ function makeRoutes(auth,jobs){
       console.log("FILALIENWEFOWFOEWNFNEVNOIVNE")
     }
   });
+
+
+
+  routes.post("/removeImage",verifyToken, async (req,res)=>{
+    console.log("reached rutes")
+    console.log(req.body)
+    let fileName=req.body.fileName;
+    let user=req.user.id;
+    console.log(`fileName=${fileName}`);
+    console.log(`user:${user}`)
+    let status= await jobs.removeImage(user,fileName)
+    if(status==="success!"){
+      res.status(200).json({message:"success"})
+    }else{
+      res.status(500).json({message:"failed"})
+    }
+  })
   
   return routes;
 }

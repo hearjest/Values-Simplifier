@@ -23,6 +23,17 @@ class jobRepo{
         return res
     }
 
+
+    async hasFile(userId,fileName){//later multiple users should be able to check. the file should have a column for users who have access
+        let res = await this.sql`SELECT id FROM jobs WHERE processed_path=${fileName} AND user_id=${userId}`;
+        return res.length>0
+    }
+
+    async removeFile(fileName){
+        let res = await this.sql`DELETE FROM jobs WHERE processed_path=${fileName}`
+        return res;
+    }
+
 }
 
 export {jobRepo}

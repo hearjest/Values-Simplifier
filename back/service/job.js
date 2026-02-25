@@ -50,6 +50,27 @@ class Job{
         }
         return urls;
     }
+
+    async removeImage(userId,fileName){
+        console.log("AT JOBS")
+        let hasFileDB=await this.jobRep.hasFile(userId,fileName)
+        let hasFileBucket=await this.minioClient.statObject(process.env.MINIO_BUCKET1,fileName)
+        console.log(`hasFileDB=${hasFileDB}`);
+        console.log(`hasFileBucket=${hasFileBucket}`);
+        if(hasFileDB&&hasFileBucket){
+            console.log("yaye")
+            let result = await this.jobRep.removeFile(fileName);
+            let result2=await this.minioClient.removeObject(process.env.MINIO_BUCKET1,fileName)
+            console.log(`Removed ${fileName}`)
+            return "success!"
+        }else{
+            console.log("no!!!!!")
+            return "failed"
+        }
+
+    }
+
+    
 }
 
 export {Job}

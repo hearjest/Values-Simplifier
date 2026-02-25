@@ -222,8 +222,17 @@
             deleteBtn.className='menu-item';
             deleteBtn.textContent='Delete';
             deleteBtn.onclick=async () => {
-                console.log("hi")
-                menu.classList.remove('show');
+                let fileName=(link.split("http://localhost:9000/processed/"))[1]
+                console.log(fileName)
+                let res = await fetch("/api/removeImage",{
+                    method:"POST",
+                    headers:{'Content-Type': 'application/json' },
+                    body:JSON.stringify({fileName:fileName}),
+                    credentials:"include",
+                })
+                if(res.ok){
+                    container.remove()
+                }
             };
             menu.append(downloadBtn, deleteBtn);
             optionsDiv.append(optionsBtn, menu);
