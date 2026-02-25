@@ -6,3 +6,4 @@ temp2
 .gitignore
 deprecated
 *__pycache__
+*.tar

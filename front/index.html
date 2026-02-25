@@ -64,26 +64,26 @@
 
     <script src="/socket.io/socket.io.js"></script>
     <script>
-        const authContainer = document.getElementById('authContainer');
-        const uploadContainer = document.getElementById('uploadContainer');
-        const loginForm = document.getElementById('loginForm');
-        const registerForm = document.getElementById('registerForm');
-        const authMessage = document.getElementById('authMessage');
-        const showRegister = document.getElementById('showRegister');
-        const showLogin = document.getElementById('showLogin');
-        const logoutBtn = document.getElementById('logoutBtn');
+        const authContainer=document.getElementById('authContainer');
+        const uploadContainer=document.getElementById('uploadContainer');
+        const loginForm=document.getElementById('loginForm');
+        const registerForm=document.getElementById('registerForm');
+        const authMessage=document.getElementById('authMessage');
+        const showRegister=document.getElementById('showRegister');
+        const showLogin=document.getElementById('showLogin');
+        const logoutBtn=document.getElementById('logoutBtn');
         const closeUpBackground=document.getElementById('imgCloseUp');
         const closeUpImg=document.getElementById('closeUp')
         checkAuthStatus();
 
         async function checkAuthStatus(){
             try {
-                const res = await fetch('/api/checkToken',{
+                const res=await fetch('/api/checkToken',{
                     method:'GET',
                     credentials: 'include'
                 });
                 if (res.ok) {
-                    const result = await res.json();
+                    const result=await res.json();
                     if (result.success) {
                         await showUploadSection();
                     }
@@ -95,71 +95,71 @@
 
         showRegister.addEventListener('click', (e) => {
             e.preventDefault();
-            loginForm.style.display = 'none';
-            showRegister.parentElement.style.display = 'none';
-            registerForm.style.display = 'block';
-            showLogin.parentElement.style.display = 'block';
+            loginForm.style.display='none';
+            showRegister.parentElement.style.display='none';
+            registerForm.style.display='block';
+            showLogin.parentElement.style.display='block';
         });
 
         showLogin.addEventListener('click', (e) => {
             e.preventDefault();
-            registerForm.style.display = 'none';
-            showLogin.parentElement.style.display = 'none';
-            loginForm.style.display = 'block';
-            showRegister.parentElement.style.display = 'block';
+            registerForm.style.display='none';
+            showLogin.parentElement.style.display='none';
+            loginForm.style.display='block';
+            showRegister.parentElement.style.display='block';
         });
 
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userName = document.getElementById('loginUsername').value;
-            const password = document.getElementById('loginPassword').value;
+            const userName=document.getElementById('loginUsername').value;
+            const password=document.getElementById('loginPassword').value;
 
             try {
-                const response = await fetch('/api/login', {
+                const response=await fetch('/api/login', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ userName, password })
                 });
 
-                const result = await response.json();
+                const result=await response.json();
                 if (response.ok && result.success) {
                     await showUploadSection();
                 } else {
-                    authMessage.textContent = result.message || 'Login failed';
-                    authMessage.className = 'message error';
+                    authMessage.textContent=result.message || 'Login failed';
+                    authMessage.className='message error';
                 }
             } catch (error) {
-                authMessage.textContent = 'Login error';
-                authMessage.className = 'message error';
+                authMessage.textContent='Login error';
+                authMessage.className='message error';
             }
         });
 
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const userName = document.getElementById('regUsername').value;
-            const password = document.getElementById('regPassword').value;
+            const userName=document.getElementById('regUsername').value;
+            const password=document.getElementById('regPassword').value;
 
             try {
-                const response = await fetch('/api/reg', {
+                const response=await fetch('/api/reg', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     credentials: 'include',
                     body: JSON.stringify({ userName, password })
                 });
 
-                const result = await response.json();
+                const result=await response.json();
                 if (response.ok && result.success) {
-                    authMessage.textContent = 'Registered! Please login.';
-                    authMessage.className = 'message success';
+                    authMessage.textContent='Registered! Please login.';
+                    authMessage.className='message success';
                     setTimeout(() => showLogin.click(), 1500);
                 } else {
-                    authMessage.textContent = result.message || 'Registration failed';
-                    authMessage.className = 'message error';
+                    authMessage.textContent=result.message || 'Registration failed';
+                    authMessage.className='message error';
                 }
             } catch (error) {
-                authMessage.textContent = 'Registration error';
-                authMessage.className = 'message error';
+                authMessage.textContent='Registration error';
+                authMessage.className='message error';
             }
         });
 
@@ -172,8 +172,8 @@
             } catch (error) {
                 console.error('Logout error:', error);
             }
-            authContainer.style.display = 'block';
-            uploadContainer.style.display = 'none';
+            authContainer.style.display='block';
+            uploadContainer.style.display='none';
         });
         closeUpBackground.addEventListener('click',()=>{
                     closeUpBackground.style.display='none';
@@ -182,7 +182,18 @@
         closeUp.addEventListener('click',()=>{
             window.open(closeUp.src)
         })
+
+        async function createImgMenuOptions(){
+            let button=document.createElement('button')
+            button.type="button";
+            button.addEventListener('click',()=>{
+
+            })
+        }  
+
         function addImgToBox(imgBox,link){
+            let container=document.createElement('div');
+            container.className='image-container'
             let img=document.createElement('img');
             img.src=link
             img.addEventListener('click',()=>{
@@ -192,21 +203,58 @@
                 closeUpImg.src=link;
                 closeUpImg.target="_blank"
             })
-            imgBox.append(img)
+            let optionsDiv=document.createElement('div');
+            optionsDiv.className='image-options';
+            let optionsBtn=document.createElement('button');
+            optionsBtn.className='options-btn';
+            optionsBtn.innerHTML='⋮';
+            optionsBtn.type='button';
+            let menu=document.createElement('div');
+            menu.className='options-menu';
+            let downloadBtn=document.createElement('button');
+            downloadBtn.className='menu-item';
+            downloadBtn.textContent='Download';
+            downloadBtn.onclick=() => {
+                window.open(link, '_blank');
+                menu.classList.remove('show');
+            };
+            let deleteBtn=document.createElement('button');
+            deleteBtn.className='menu-item';
+            deleteBtn.textContent='Delete';
+            deleteBtn.onclick=async () => {
+                console.log("hi")
+                menu.classList.remove('show');
+            };
+            menu.append(downloadBtn, deleteBtn);
+            optionsDiv.append(optionsBtn, menu);
+            optionsBtn.onclick=(e) => {
+                e.stopPropagation();
+                document.querySelectorAll('.options-menu.show').forEach(m => {
+                    if (m !== menu) m.classList.remove('show');
+                });
+                menu.classList.toggle('show');
+            };
+            document.addEventListener('click', (e) => {
+                if (!container.contains(e.target)) {
+                    menu.classList.remove('show');
+                }
+            });
+            container.append(optionsDiv,img);
+            imgBox.append(container);
         }
 
         async function loadUserImages() {
             try {
-                const response = await fetch('/api/getFiles', {
+                const response=await fetch('/api/getFiles', {
                     method: 'GET',
                     credentials: 'include'
                 });
-                const res = await response.json();
-                let imgBox = document.getElementById('imgBox');
-                imgBox.innerHTML = '';
+                const res=await response.json();
+                let imgBox=document.getElementById('imgBox');
+                imgBox.innerHTML='';
                 if (res.result && res.result.length > 0) {
-                    for (let i = 0; i < res.result.length; i++) {
-                        const link = res.result[i];
+                    for (let i=0; i < res.result.length; i++) {
+                        const link=res.result[i];
                         addImgToBox(imgBox, link);
                     }
                 }
@@ -214,63 +262,63 @@
                 console.error('Error loading images:', error);
             }
         }
-        const getFilesBtn = document.getElementById('getFilesBtn');
+        const getFilesBtn=document.getElementById('getFilesBtn');
         getFilesBtn.addEventListener('click', loadUserImages);
 
         async function showUploadSection() {
-            authContainer.style.display = 'none';
-            uploadContainer.style.display = 'block';
+            authContainer.style.display='none';
+            uploadContainer.style.display='block';
             await loadUserImages();
         }
 
         
 
-        const socket = io();
+        const socket=io();
         socket.on("completed",({jobId, url})=>{
                         console.log(" got job " + jobId + " completed")
                         console.log("job url is ", url)
-                        const img = document.createElement('img'); img.src = url;
+                        const img=document.createElement('img'); img.src=url;
                         uploadContainer.append(img)
                         let imgBox=document.getElementById('imgBox')
                         addImgToBox(imgBox,url)
         })
-        const form = document.getElementById('uploadForm');
-        const fileInput = document.getElementById('fileInput');
-        const message = document.getElementById('message');
-        const uploadText = document.querySelector('.upload-text');
+        const form=document.getElementById('uploadForm');
+        const fileInput=document.getElementById('fileInput');
+        const message=document.getElementById('message');
+        const uploadText=document.querySelector('.upload-text');
         
         fileInput.addEventListener('change', (e) => {
             if (e.target.files.length > 0) {
-                uploadText.textContent = e.target.files[0].name;
+                uploadText.textContent=e.target.files[0].name;
             } else {
-                uploadText.textContent = 'Choose a file or drag it here';
+                uploadText.textContent='Choose a file or drag it here';
             }
         });
         
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            const formData = new FormData(form);
+            const formData=new FormData(form);
             
             try {
-                const response = await fetch('/api/upload', {
+                const response=await fetch('/api/upload', {
                     method: 'POST',
                     credentials: 'include',
                     body: formData
                 });
                 
-                const result = await response.json();
+                const result=await response.json();
                 if (response.ok) {
-                    message.textContent = result.message;
-                    message.className = 'message success';
+                    message.textContent=result.message;
+                    message.className='message success';
                     socket.emit("subTo",result.jobId)
                     
                 } else {
-                    message.textContent = result.message || 'Upload failed';
-                    message.className = 'message error';
+                    message.textContent=result.message || 'Upload failed';
+                    message.className='message error';
                 }
             } catch (error) {
-                message.textContent = 'An error occurred while uploading the file';
-                message.className = 'message error';
+                message.textContent='An error occurred while uploading the file';
+                message.className='message error';
             }
         });
         
