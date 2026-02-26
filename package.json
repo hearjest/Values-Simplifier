@@ -4,12 +4,11 @@
   "description": "",
   "main": "/back/server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "playwright test",
     "start": "node ./back/server.js ./back/queueStatusEmit.js",
     "compose:up": "docker compose up",
     "worker": "python \"./back/worker/worker.py\"",
     "dev": "concurrently \"npm:compose:up\" \"npm:start\" "
-
   },
   "repository": {
     "type": "git",
@@ -39,5 +38,8 @@
     "postgres": "^3.4.8",
     "socket.io": "^4.8.3"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2"
+  }
 }

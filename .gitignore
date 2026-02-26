@@ -7,4 +7,5 @@ temp2
 deprecated
 *__pycache__
 *.tar
-tests
+playwright-report/
+test-results/
