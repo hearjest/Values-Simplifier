@@ -33,3 +33,64 @@ Once you finish what is outlined in ```.env.READMEPLS```, now run: <br>
 
 Or... you can download the docker image <a href="https://drive.google.com/file/d/19BmtIQeiJFAjyOCIoyFz2wZGyfZfEfSV/view?usp=sharing">here</a> and run: <br>
 ```docker load -i values-simplifier-images.tar```
+
+
+# FILE STRUCTURE
+The main folders you will be looking at is the Values-Simplifier folder, and the subdirectories back and front.
+
+### Values-Simplifier
+Here you'll find the docker files and the init.sql file. Should you delete the DB, you can use init.sql as a backup, for the schemas at least. In addition, outside of the subdirectories are just routes and server. In server, all instantiations take place here and common objects are shared. Routes will orchestrate the handling of everything. Please note the .env.READMEPLS and ensure your .env files are in .gitignore.
+
+### FRONT
+Within the front folder are currently just index.html and style.css. Edit index.html to change the html structure, and style.css for the styling. 
+
+
+### BACK
+The back directory is the most important. It contains the following subdirectories: comm, repos, service, and util.
+<br> 
+<ul>
+  <li>
+    comm
+    <ul>
+      <li>
+      This is where connections to the (1)postgre database, (2) the minio bucket, (3) the redis connection and subsequently the queue object, and (4) the websocket are made.
+    </li>
+    </ul>
+  </li> 
+  <li>
+    repos
+    <ul>
+      <li>
+        This is where postgre operations involving user information and image information are implemented. 
+      </li>
+    </ul>
+  </li>
+  <li>
+    service
+    <ul>
+      <li>
+        This folder is contains the files that make the API calls to the db (via jobRep and userRep in repos). Minio operations and additions to the queue in redis take place here as well. The bits of code used seemed not significant enough for me to make a file in repos in it. But as of writing, this is probably a better idea, even if just for consistency's sake.
+        <li>
+          In addition, queueEvent listens in onto the worker process' progress via the queue's status in redis and reacts based on job beginnings, failures, and completion.
+        </li>
+      </li>
+    </ul>
+  </li>
+  <li>
+    util
+    <ul>
+      <li>
+        Where authentication related operations are implemented. JSON webtokens are used for session id creation and verification. Password hashing is done in passHash, but the actual decoding is done in verifyToken in jwtVerify.js. 
+      </li>
+    </ul>
+  </li>
+  <li>
+    worker
+    <ul>
+      <li>
+        This is folder is where the worker process is instantiated and listens to redis, waiting for a job to arrive to the queue. From then, it will used the selected processing method speicfied by the user and process the image. Upon completion it notifies redis and consequentially queueEvent. Should you add more processing methods, please add it to the processMethodFactory.
+      </li>
+    </ul>
+  </li>
+</ul>
+<br>
