@@ -5,7 +5,7 @@ const mem = multer.memoryStorage();
 const upload = multer({ storage: mem });
 
 
-function makeRoutes(auth,jobs){
+function makeRoutes(auth,jobs,health){
   const routes = express.Router();
 
 
@@ -103,6 +103,17 @@ function makeRoutes(auth,jobs){
       res.status(200).json({message:"success"})
     }else{
       res.status(500).json({message:"failed"})
+    }
+  })
+
+  routes.get('/checkHealth',async(req,res)=>{
+    let report=await health.checkAll();
+    console.log("report health", report.healthy);
+    console.log("report checks",report.checks)
+    if(report.healthy){
+      res.status(200).json({checks:report.checks})
+    }else{
+      res.status(500).json({checks:report.checks})
     }
   })
   

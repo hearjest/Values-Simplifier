@@ -8,3 +8,5 @@ deprecated
 *__pycache__
 *.tar
 tests
+test-results
+text.txt

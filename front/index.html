@@ -31,6 +31,7 @@
     </div>
 
     <div id="uploadContainer" class="container" style="display:none;">
+        <button type="button" id="funnybutton">funny button</button>
         <div class="header-with-logout">
             <h1>File Upload</h1>
             <button type="button" id="logoutBtn">Logout</button>
@@ -330,6 +331,13 @@
                 message.className='message error';
             }
         });
+
+        document.getElementById('funnybutton').addEventListener('click',async (req,res)=>{
+            console.log(await fetch('/api/checkHealth',{
+                method:'GET',
+                credentials:"include"
+            }))
+        })
         
     </script>
 </body>

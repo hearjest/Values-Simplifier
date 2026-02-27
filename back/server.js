@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import {createServer} from 'http';
 import {initialize,getIO} from './comm/socket_dot_io.js'
 import {sql} from './comm/dbConnection.js'
+import dq from './comm/queue.js'
 import {minioClient} from './comm/minioConn.js'
 import dotenv from 'dotenv';
 import { UserRepo } from './repos/userRep.js';
@@ -14,6 +15,8 @@ import { jobRepo } from './repos/jobRep.js';
 import { generalAuth } from './service/usersLogReg.js';
 import { Job } from './service/job.js';
 import {queueEventEmits} from './service/queueEvent.js'
+import {health} from './healthCheck/healthCheck.js'
+import {connection} from './comm/redisConnection.js'
 dotenv.config();
 import {spawn} from 'child_process'
 const PORT = process.env.PORT || 3000;
@@ -49,4 +52,4 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../front')));
 app.use('/temp2', express.static(path.join(__dirname, '../temp2')));
-app.use('/api', makeRoutes(auth,jobs));
+app.use('/api', makeRoutes(auth,jobs,new health(sql,minioClient,connection,dq)));
