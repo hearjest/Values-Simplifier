@@ -12,6 +12,7 @@ from processMethodFactory import methodFactory
 from redis.asyncio import Redis
 import json
 load_dotenv()
+from monitoring.logger import log,structlog
 
 minio_host = os.getenv("MINIO_HOST", "localhost")
 minio_port = os.getenv("MINIO_PORT", "9000")
@@ -23,24 +24,35 @@ client = Minio(f"{minio_host}:{minio_port}",
 )
 
 async def process(job, token):
-    print(f"Worker: BEGIN Job {job.id} from User {job.data['userId']}");
+    structlog.contextvars.clear_contextvars()
+    bucket = os.getenv("MINIO_BUCKET1");
+    jobLogger = log.bind(
+        userId=job.data['userId'],
+        jobId=job.id,
+        bucket=bucket,
+    )
     jobType=job.data["jobType"]
     processor = methodFactory.create(jobType)
-    res = processor.process(job)
+    
+    await jobLogger.ainfo("Job processing")
+    try:
+        res = processor.process(job)
+    except:
+        await jobLogger.error("Job processing failed")
 
-    #res = shade_clustering.cluster_shades(job.data['filePath'], '../temp2')
-    bucket = os.getenv("MINIO_BUCKET1");
     layer="{}-{}"
     fileName=layer.format(job.data['userId'],job.data["fileName"])
     objectKey = fileName
-    print(f"Uploading to bucket '{bucket}' with key '{objectKey}'")
+
+    await jobLogger.ainfo("Uploading to bucket",objectKey=objectKey);
     try:
         result = client.fput_object(bucket, objectKey, res['clustered_gray'])    
     except S3Error as e:
-        print(f"Failed to upload: {e}")
+        jobLogger.ainfo("Failed to upload", exception=e)
+    
     puburl = os.getenv("MINIO_PUBLIC_URL", f"http://localhost:{minio_port}")
     directurl = f"{puburl}/{bucket}/{objectKey}"
-    print(f"Worker: FINISH Job {job.id} from User {job.data['userId']}");
+    await jobLogger.ainfo('')
     return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":res['input'],"url":directurl}
 
 async def main():

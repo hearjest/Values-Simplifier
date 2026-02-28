@@ -1,4 +1,0 @@
-[14:52:39.192] [32mINFO[39m (12088): [36mlistening. using httpServer. go to http://localhost:3000/ . Waait for Worker and docker containers to come online[39m
-    [35mport[39m: "3000"
-[14:52:39.673] [32mINFO[39m (12088): [36ma user is connected[39m
-[14:52:40.907] [32mINFO[39m (12088): [36ma user is connected[39m
