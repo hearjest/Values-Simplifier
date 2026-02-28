@@ -4,11 +4,6 @@ class jobRepo{
     }
 
     async addJob(uid,id,jobPath,jobType){
-        console.log('jobRepo.addJob called with:');
-        console.log('  uid:', uid, 'type:', typeof uid);
-        console.log('  id:', id, 'type:', typeof id);
-        console.log('  jobPath:', jobPath, 'type:', typeof jobPath);
-        
         let res = await this.sql`INSERT INTO jobs (id,user_id,status,original_path) VALUES(${uid},${id},${"queued"},${jobPath})`
         return res.length > 0;
     }

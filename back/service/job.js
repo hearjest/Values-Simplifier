@@ -4,6 +4,9 @@ import path from 'path';
 import fs from 'fs/promises';
 import dotenv from 'dotenv';
 dotenv.config();
+import {logger} from '../monitoring/logger.js'
+import Module from 'module';
+const loggy=logger.child({Module:'JobRepo'})
 class Job{
     constructor(jobRep,minioClient){
         this.jobRep =jobRep;
@@ -19,36 +22,58 @@ class Job{
         let uuid = uuidv4();
         const pathForWorker=path.join('./temp', `${uuid}-${originalName}`);
         const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
-        await fs.writeFile(pathForStorage, fileBuffer);
+        try{
+            loggy.info({userId:userId, function:'createJob'},"Writing file")
+            await fs.writeFile(pathForStorage, fileBuffer);
+        }catch(error){
+            loggy.error({userId:userId,function:'createJob',err:error},"Error writing file")
+        }
+        
         const jobType=metadata.method
-        await this.jobRep.addJob(uuid, userId, pathForWorker,jobType|null);
-        const job =await dq.add('process-image',
-        {filePath:pathForWorker,
-          fileName:originalName,
-          uid: uuid,
-          meta:metadata,
-          userId:userId,
-          jobType:jobType
-        })
-        return {jobId:job.id}
+        try{
+            loggy.info({userId:userId, function:'createJob'},"Adding job to database")
+            await this.jobRep.addJob(uuid, userId, pathForWorker,jobType|null);
+        }catch(error){
+            loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
+        }
+        try{
+            loggy.info({userId:userId, function:'createJob'},"Adding job to bullmq queue")
+            const job =await dq.add('process-image',
+                {filePath:pathForWorker,
+                fileName:originalName,
+                uid: uuid,
+                meta:metadata,
+                userId:userId,
+                jobType:jobType
+            })
+            return {jobId:job.id}
+        }catch(error){
+            loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
+        }
     }
 
     async getImagesForUser(userId){
-        const paths = await this.jobRep.getJobsForUser(userId);
-        const urls=[];
-        let url=null;
-        const publicMinioUrl = process.env.MINIO_PUBLIC_URL || 'http://localhost:9000';
-        const bucket = process.env.MINIO_BUCKET1;
-        for(let i=0;i<paths.length;i++){
-            try{
-                let status=await this.minioClient.statObject(bucket, paths[i]['processed_path']);
-                url = `${publicMinioUrl}/${bucket}/${paths[i]['processed_path']}`;
-                urls.push(url)
-            }catch(err){
-                continue;
-            }
+        try{
+            loggy.info({userId:userId,method:"getImagesForUser"},`Attempting to get files for user ${userId}`)
+            const paths = await this.jobRep.getJobsForUser(userId);
+                const urls=[];
+                let url=null;
+                const publicMinioUrl = process.env.MINIO_PUBLIC_URL || 'http://localhost:9000';
+                const bucket = process.env.MINIO_BUCKET1;
+                for(let i=0;i<paths.length;i++){
+                    try{
+                        let status=await this.minioClient.statObject(bucket, paths[i]['processed_path']);
+                        url = `${publicMinioUrl}/${bucket}/${paths[i]['processed_path']}`;
+                        urls.push(url)
+                    }catch(err){
+                        continue;
+                    }
+                }
+                return urls;
+        }catch(error){
+            loggy.error({userId:userId,function:'getImagesForUser',err:error},"Error getting files for user")
         }
-        return urls;
+        
     }
 
     async removeImage(userId,fileName){

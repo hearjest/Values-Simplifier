@@ -36,9 +36,12 @@
     "jwt-decode": "^4.0.0",
     "minio": "^8.0.6",
     "multer": "^2.0.2",
-    "pino": "^10.3.1",
+    "pino-http": "^11.0.0",
     "postgres": "^3.4.8",
     "socket.io": "^4.8.3"
   },
-  "type": "module"
+  "type": "module",
+  "devDependencies": {
+    "pino-pretty": "^13.1.3"
+  }
 }
