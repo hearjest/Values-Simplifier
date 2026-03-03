@@ -1,6 +1,7 @@
 import express from 'express';
 import multer from 'multer';
 import {verifyToken} from './util/jwtVerify.js'
+import {uploadLimiterrateLimit,loginLimiterrateLimit} from './util/ratelimiters.js'
 const mem=multer.memoryStorage();
 const upload=multer({storage:mem});
 
@@ -13,7 +14,7 @@ function makeRoutes(auth,jobs,health){
  });
 
 //-------------------------------------------
-  routes.post('/login', async (req,res)=>{
+  routes.post('/login',loginLimiterrateLimit, async (req,res)=>{
     try{
       const {userName, password}=req.body;
       req.log.info({userName}, 'Login attempt');
@@ -38,7 +39,7 @@ function makeRoutes(auth,jobs,health){
    }
  })
 //-------------------------------------------
-  routes.post('/reg', async (req,res)=>{
+  routes.post('/reg', loginLimiterrateLimit,async (req,res)=>{
     try{
       const {userName,password}=req.body
       req.log.info({userName}, 'Registration attempt');
@@ -78,7 +79,7 @@ function makeRoutes(auth,jobs,health){
 
 
 //-------------------------------------------
-  routes.post('/upload', verifyToken, upload.single('img'), async (req, res) => {
+  routes.post('/upload',uploadLimiterrateLimit, verifyToken, upload.single('img'), async (req, res) => {
     try{
         const userId=req.user.id;
         const fileName=req.file.originalname;

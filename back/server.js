@@ -21,11 +21,24 @@ import pinoHttp from 'pino-http'
 import {logger} from './monitoring/logger.js'
 import {asyncStorage} from './monitoring/context.js'
 import { v4 as uuidv4 } from 'uuid';
+import {ipKeyGenerator, rateLimit} from 'express-rate-limit'
+import {RedisStore} from 'rate-limit-redis'
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
+const limit=rateLimit({
+  windowMs:60000*60,
+  limit:15,
+  message:{error:"You've reached the maximum amount of requests for uploads"},
+  legacyHeaders:false,
+  standardHeaders:'draft-8',
+  store:new RedisStore({
+    sendCommand:(command,...args)=>
+      connection.call(command,...args)
+  }),//nb will return redisReply promise
+})
 
 const httpServer=createServer(app);
 initialize(httpServer)
@@ -80,4 +93,5 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../front')));
 app.use('/temp2', express.static(path.join(__dirname, '../temp2')));
+app.use(limit);
 app.use('/api', makeRoutes(auth,jobs,new health(sql,minioClient,connection,dq)))
