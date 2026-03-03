@@ -8,9 +8,10 @@ import {logger} from '../monitoring/logger.js'
 import Module from 'module';
 const loggy=logger.child({Module:'JobRepo'})
 class Job{
-    constructor(jobRep,minioClient){
+    constructor(jobRep,minioClient,redis){
         this.jobRep =jobRep;
         this.minioClient=minioClient;
+        this.redis=redis;
     }
     /**
      * @param {Integer} userId 
@@ -55,7 +56,12 @@ class Job{
     async getImagesForUser(userId){
         try{
             loggy.info({userId:userId,method:"getImagesForUser"},`Attempting to get files for user ${userId}`)
-            const paths = await this.jobRep.getJobsForUser(userId);
+            const cacheResult=await this.redis.getCachedUrls(`users:${userId}:urls`)
+
+            if(cacheResult){
+                return JSON.parse(cacheResult);
+            }else{
+                const paths = await this.jobRep.getJobsForUser(userId);
                 const urls=[];
                 let url=null;
                 const publicMinioUrl = process.env.MINIO_PUBLIC_URL || 'http://localhost:9000';
@@ -69,7 +75,11 @@ class Job{
                         continue;
                     }
                 }
+                this.redis.set(`users:${userId}:urls`,JSON.stringify(urls),"EX",600)
+
                 return urls;
+            }
+            
         }catch(error){
             loggy.error({userId:userId,function:'getImagesForUser',err:error},"Error getting files for user")
         }
@@ -77,19 +87,15 @@ class Job{
     }
 
     async removeImage(userId,fileName){
-        console.log("AT JOBS")
         let hasFileDB=await this.jobRep.hasFile(userId,fileName)
         let hasFileBucket=await this.minioClient.statObject(process.env.MINIO_BUCKET1,fileName)
-        console.log(`hasFileDB=${hasFileDB}`);
-        console.log(`hasFileBucket=${hasFileBucket}`);
         if(hasFileDB&&hasFileBucket){
-            console.log("yaye")
             let result = await this.jobRep.removeFile(fileName);
             let result2=await this.minioClient.removeObject(process.env.MINIO_BUCKET1,fileName)
-            console.log(`Removed ${fileName}`)
+            let result3=await this.redis.del(`users:${userId}:urls`)
+            let newUrls=await this.getImagesForUser(userId)
             return "success!"
         }else{
-            console.log("no!!!!!")
             return "failed"
         }
 

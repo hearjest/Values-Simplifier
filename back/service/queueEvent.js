@@ -22,6 +22,11 @@ class queueEventEmits{
                 loggy.error({jobId:jobId,jobStatus:'Failed to update DB'},`Job ${jobId} DB updated failed`)
             }
             try{
+                await connection.del(`users:${returnvalue.userId}:urls`);
+            }catch(error){
+                loggy.error({jobId:jobId,jobStatus:"Failed to delete key in redis"})
+            }
+            try{
                 io.to(`Job:${jobId}`).emit("completed",{jobId, url: returnvalue.url})
             }catch(error){
                 loggy.error({jobId:jobId,jobStatus:'Failed to send completion status to socket'},`Job ${jobId} completion notification socket failed`)

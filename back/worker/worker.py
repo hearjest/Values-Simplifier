@@ -53,7 +53,7 @@ async def process(job, token):
     puburl = os.getenv("MINIO_PUBLIC_URL", f"http://localhost:{minio_port}")
     directurl = f"{puburl}/{bucket}/{objectKey}"
     await jobLogger.ainfo('')
-    return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":res['input'],"url":directurl}
+    return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":res['input'],"url":directurl,"userId":job.data['userId']}
 
 async def main():
     shutdown_event = asyncio.Event()
