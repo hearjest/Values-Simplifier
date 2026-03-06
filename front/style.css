@@ -157,6 +157,21 @@ input[type="file"] {
     gap: 15px;
 }
 
+#registerForm input#regPassword:focus {
+    border:0.3em solid;
+    border-color:red;
+}
+
+#registerForm input#regPassword:focus:valid{
+    border:0.3em solid;
+    border-color:green;
+}
+
+#registerbutton:disabled{
+    opacity:0.5;
+    cursor:not-allowed
+}
+
 #loginForm input, #registerForm input {
     padding: 12px;
     border: 1px solid #ddd;
@@ -337,4 +352,13 @@ img:hover {
     height:100%;
     background-color: #155724;
     color:#155724;
+}
+
+#regPassword {
+    border:1rem solid;
+    border-color:#dc3545;
+}
+
+#regPassword:valid{
+    outline-color:green;
 }

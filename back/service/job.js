@@ -46,7 +46,11 @@ class Job{
                 meta:metadata,
                 userId:userId,
                 jobType:jobType
-            })
+            },
+        {
+            removeOnComplete:true,
+            attempts:3,
+        })
             return {jobId:job.id}
         }catch(error){
             loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
@@ -55,12 +59,13 @@ class Job{
 
     async getImagesForUser(userId){
         try{
-            loggy.info({userId:userId,method:"getImagesForUser"},`Attempting to get files for user ${userId}`)
+            loggy.info({userId:userId,method:"getImagesForUser"},`Attempting to get files for user ${userId} via redis' cache`)
             const cacheResult=await this.redis.getCachedUrls(`users:${userId}:urls`)
 
             if(cacheResult){
                 return JSON.parse(cacheResult);
             }else{
+                loggy.info({userId:userId, method:"getImagesForUser"}, `Cache miss, fallback on DB`);
                 const paths = await this.jobRep.getJobsForUser(userId);
                 const urls=[];
                 let url=null;
