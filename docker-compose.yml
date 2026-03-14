@@ -23,6 +23,13 @@ services:
       - minio
     volumes:
       - ./temp:/app/temp
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/checkHealth', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
   worker:
     build:
@@ -44,6 +51,7 @@ services:
       - ./temp:/app/temp
       - ./temp2:/app/temp2
     command: python worker.py
+    restart: unless-stopped
 
   postgres:
     image: postgres:latest
@@ -56,6 +64,7 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql
       - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
 
   redis:
     image: redis:8.4
@@ -63,6 +72,7 @@ services:
       - "6379:6379"
     volumes:
       - redisdata:/data
+    restart: unless-stopped
 
   minio:
     image: minio/minio:latest
@@ -76,6 +86,7 @@ services:
     volumes:
       - minio_data:/data
       - ./temp2:/app/temp
+    restart: unless-stopped
 
 volumes:
   pgdata:

@@ -23,6 +23,7 @@ import {asyncStorage} from './monitoring/context.js'
 import { v4 as uuidv4 } from 'uuid';
 import {ipKeyGenerator, rateLimit} from 'express-rate-limit'
 import {RedisStore} from 'rate-limit-redis'
+import {uploady} from './service/uploader.js'
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
