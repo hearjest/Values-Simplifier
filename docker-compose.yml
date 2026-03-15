@@ -17,6 +17,7 @@ services:
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
       REDIS_HOST: redis
       PORT: 3000
+      MINIO_BUCKET1: processed
     depends_on:
       - postgres
       - redis

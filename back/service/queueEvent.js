@@ -36,6 +36,7 @@ class queueEventEmits{
 
         queueEvents.on('failed',({jobId,failedReason})=>{
             loggy.error({jobId:jobId,err:failedReason},`Job ${jobId} FAILED`)
+            io.to(`Job:${jobId}`).emit("failed",{jobId})
         });
 
         queueEvents.on(

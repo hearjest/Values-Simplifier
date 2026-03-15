@@ -14,7 +14,7 @@ function makeRoutes(auth,jobs,health){
  });
 
 //-------------------------------------------
-  routes.post('/login',loginLimiterrateLimit, async (req,res)=>{
+  routes.post('/login', loginLimiterrateLimit, async (req,res)=>{
     try{
       const {userName, password}=req.body;
       req.log.info({userName}, 'Login attempt');

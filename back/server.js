@@ -94,5 +94,5 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../front')));
 app.use('/temp2', express.static(path.join(__dirname, '../temp2')));
-app.use(limit);
+//app.use(limit);
 app.use('/api', makeRoutes(auth,jobs,new health(sql,minioClient,connection,dq)))

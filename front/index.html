@@ -10,7 +10,7 @@
     <div id="authContainer" class="container">
         <h1>Login</h1>
         <form id="loginForm">
-            <input type="text" id="loginUsername" placeholder="Username" required autocomplete="on" minlength="5">
+            <input type="text" id="loginUsername" placeholder="Username" required autocomplete="on" minlength="4">
             <input type="password" id="loginPassword" placeholder="Password" required autocomplete="current-password">
             <button type="submit">Login</button>
         </form>
@@ -18,7 +18,7 @@
 
         <form id="registerForm" style="display:none;">
             <h1>Register</h1>
-            <input type="text" id="regUsername" placeholder="Username" minlength="8" required><!--need to implement checking duplicate usernames-->
+            <input type="text" id="regUsername" placeholder="Username" minlength="4" required><!--need to implement checking duplicate usernames-->
             <input type="password" id="regPassword" placeholder="Password" required autocomplete="new-password" minlength="8"
             oninput="val(this)">
             <div id="error"></div>
@@ -34,6 +34,7 @@
 
     <div id="uploadContainer" class="container" style="display:none;">
         <button type="button" id="funnybutton">funny button</button>
+        <button type="button" id="sync">sync!</button>
         <div class="header-with-logout">
             <h1>File Upload</h1>
             <button type="button" id="logoutBtn">Logout</button>
@@ -111,7 +112,6 @@
             loginForm.style.display='block';
             showRegister.parentElement.style.display='block';
         });
-
         loginForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const userName=document.getElementById('loginUsername').value;
@@ -137,7 +137,6 @@
                 authMessage.className='message error';
             }
         });
-
         registerForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             const userName=document.getElementById('regUsername').value;
@@ -182,8 +181,8 @@
                     closeUpBackground.style.display='none';
                     closeUpImg.style.display='none';
                 })
-        closeUp.addEventListener('click',()=>{
-            window.open(closeUp.src)
+        closeUpImg.addEventListener('click',()=>{
+            window.open(closeUpImg.src)
         })
 
         async function createImgMenuOptions(){
@@ -226,7 +225,6 @@
             deleteBtn.textContent='Delete';
             deleteBtn.onclick=async () => {
                 let fileName=(link.split("http://localhost:9000/processed/"))[1]
-                console.log(fileName)
                 let res = await fetch("/api/removeImage",{
                     method:"POST",
                     headers:{'Content-Type': 'application/json' },
@@ -284,16 +282,11 @@
         }
 
         
-
-        const socket=io();
-        socket.on("completed",({jobId, url})=>{
-                        console.log(" got job " + jobId + " completed")
-                        console.log("job url is ", url)
-                        const img=document.createElement('img'); img.src=url;
-                        uploadContainer.append(img)
-                        let imgBox=document.getElementById('imgBox')
-                        addImgToBox(imgBox,url)
+        const syncButton=document.getElementById('sync');
+        syncButton.addEventListener('click',async (e)=>{
+            await loadUserImages();
         })
+        
         const form=document.getElementById('uploadForm');
         const fileInput=document.getElementById('fileInput');
         const message=document.getElementById('message');
@@ -310,6 +303,15 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData=new FormData(form);
+            const socket=io();
+            socket.on("completed",({jobId, url})=>{
+                        const img=document.createElement('img'); img.src=url;
+                        uploadContainer.append(img)
+                        let imgBox=document.getElementById('imgBox')
+                        addImgToBox(imgBox,url)
+                        console.log("Closing socket");
+                        socket.disconnect();
+            });
             
             try {
                 const response=await fetch('/api/upload', {

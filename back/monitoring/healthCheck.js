@@ -23,7 +23,7 @@ class health{
     async checkMinio(){
         try{
             const res = await this.minio.bucketExists(process.env.MINIO_BUCKET1);
-            return { status: 'ok', message: `Bucket exists: ${exists}` };
+            return { status: 'ok', message: `Bucket exists: ${res}` };
         }catch(error){
             return {status:'failed',message:error}  
         } 
