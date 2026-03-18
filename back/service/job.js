@@ -8,10 +8,11 @@ import {logger} from '../monitoring/logger.js'
 import Module from 'module';
 const loggy=logger.child({Module:'JobRepo'})
 class Job{
-    constructor(jobRep,minioClient,redis){
+    constructor(jobRep,minioClient,redis,minPubCli){
         this.jobRep =jobRep;
         this.minioClient=minioClient;
         this.redis=redis;
+        this.minPubCli=minPubCli
     }
     /**
      * @param {Integer} userId 
@@ -19,31 +20,30 @@ class Job{
      * @param {String} originalName
      * 
      */
-    async createJob(userId, fileBuffer, originalName, metadata){
-        let uuid = uuidv4();
-        const pathForWorker=path.join('./temp', `${uuid}-${originalName}`);
-        const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
+    async createJob(userId, originalName, method,uuid,newFilePath,mimeType,size){
+        const pathForWorker=`${uuid}-${originalName}`;
+        //const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
         try{
             loggy.info({userId:userId, function:'createJob'},"Writing file")
-            await fs.writeFile(pathForStorage, fileBuffer);
+            //await fs.writeFile(pathForStorage, fileBuffer);
+            await this.jobRep.addMetaData(uuid,originalName,mimeType,userId,size,newFilePath)
         }catch(error){
-            loggy.error({userId:userId,function:'createJob',err:error},"Error writing file")
+            loggy.error({userId:userId,function:'createJob',err:error},"Error writing file metadata")
         }
         
-        const jobType=metadata.method
+        const jobType=method
         try{
             loggy.info({userId:userId, function:'createJob'},"Adding job to database")
-            await this.jobRep.addJob(uuid, userId, pathForWorker,jobType|null);
+            await this.jobRep.addJob(uuid, userId, newFilePath,jobType|null);
         }catch(error){
             loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
         }
         try{
             loggy.info({userId:userId, function:'createJob'},"Adding job to bullmq queue")
             const job =await dq.add('process-image',
-                {filePath:pathForWorker,
-                fileName:originalName,
-                uid: uuid,
-                meta:metadata,
+                {filePath:newFilePath,
+                fileName:newFilePath,
+                uid: uuid, 
                 userId:userId,
                 jobType:jobType
             },
@@ -65,7 +65,7 @@ class Job{
             if(cacheResult){
                 return JSON.parse(cacheResult);
             }else{
-                loggy.info({userId:userId, method:"getImagesForUser"}, `Cache miss, fallback on DB`);
+                loggy.info({userId:userId, method:"getImagesForUser"}, `Cache missed`);
                 const paths = await this.jobRep.getJobsForUser(userId);
                 const urls=[];
                 let url=null;
@@ -104,6 +104,33 @@ class Job{
             return "failed"
         }
 
+    }
+
+    async obtainPresigned(fileDetails){//need another method to add to db
+        const {userId,fileName, mimeType, sizeGB}=fileDetails
+        const uuid = uuidv4();
+        const status={
+            "url":'',
+            "res":'Failed',
+            "newPath":"",
+            "uuid":uuid
+        }
+        const newFileName =`${userId}-${uuid}-${fileName}`
+        try{
+            const url = await this.minPubCli.presignedPutObject(process.env.MINIO_BUCKET1,`${newFileName}`);
+            status.url=url;
+            status.res='Success';
+            status.newPath=newFileName
+            return status;
+        } catch(e){
+            console.log(e)
+            loggy.warn(({userId:userId,fileName:fileName,e:e},"Failed to upload file"));
+            return status
+        }
+    }
+
+    async sendFileMetaDataToDB(fileDetails){
+        const {userId,fileName, mimeType, sizeGB}=fileDetails
     }
 
     

@@ -2,7 +2,7 @@ import pino from 'pino'
 import {getRequestId} from './context.js'
 
 const logger = pino({
-    level:'info',
+    level:'warn',
     transport:{
         target:'pino-pretty',
         options:{

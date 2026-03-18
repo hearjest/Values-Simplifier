@@ -3,6 +3,16 @@ class jobRepo{
         this.sql = dbConnection
     }
 
+    async addMetaData(uuid,filename,mimeType,userId,size,bucketPath){
+        try{
+            console.log(uuid,filename,mimeType,userId,size,bucketPath)
+            let res = await this.sql`INSERT INTO filemetadata (id,file_name,mime_type,size_bytes,userid,s3_link) VALUES(${uuid},${filename},${mimeType},${size},${userId},${bucketPath})`
+            return res;
+        }catch(error){
+            throw error;
+        }
+    }
+
     async addJob(uid,id,jobPath,jobType){
         try{
             let res = await this.sql`INSERT INTO jobs (id,user_id,status,original_path) VALUES(${uid},${id},${"queued"},${jobPath})`

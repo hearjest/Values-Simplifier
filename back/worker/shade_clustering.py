@@ -7,7 +7,7 @@ import cv2
 from skimage import color, segmentation, util
 from sklearn.cluster import KMeans
 from sklearn.metrics import silhouette_score
-
+from io import BytesIO
 def ensure_dir(path: str):
     os.makedirs(path, exist_ok=True)
 
@@ -123,9 +123,8 @@ def cluster_index_image(cluster_map: np.ndarray) -> np.ndarray:
     out = palette[cluster_map]
     return out.astype(np.uint8)
 
-def cluster_shades(
-    input_path: str,
-    out_dir: str,
+def cluster_shades_array(
+    img_rgb: np.ndarray,
     *,
     max_dim: int = 1200,
     n_segments: int = 600,
@@ -134,8 +133,7 @@ def cluster_shades(
     auto_method: str = "silhouette",
     k_max: int = 8
 ) -> Dict[str, Any]:
-    ensure_dir(out_dir)
-    img_rgb = load_image_rgb(input_path, max_dim=max_dim)
+    img_rgb = resize_rgb(img_rgb, max_dim=max_dim)
     denoised = bilateral_denoise(img_rgb)
     lab = rgb_to_lab(denoised)
     segments = compute_superpixels(denoised, n_segments=n_segments, compactness=compactness)
@@ -143,32 +141,41 @@ def cluster_shades(
     if n_shades is not None and n_shades >= 1:
         k = int(max(1, n_shades))
     else:
-        if auto_method == "silhouette":
-            k = choose_k_silhouette(feats, k_min=2, k_max=k_max)
-        else:
-            k = choose_k_by_quantiles(feats, n_bins=k_max)
+        k = choose_k_silhouette(feats, 2, k_max) if auto_method == "silhouette" else choose_k_by_quantiles(feats, k_max)
+
     if k <= 1:
         seg_labels = np.zeros((feats.shape[0],), dtype=np.int32)
         centers = np.array([float(feats[:, 0].mean())])
     else:
         seg_labels, centers = cluster_kmeans(feats, n_clusters=k)
+
     cluster_map = build_cluster_map(segments, seg_labels)
     gray_clustered = cluster_to_grayscale_image(cluster_map, centers)
-    index_img = cluster_index_image(cluster_map)
-    base = os.path.splitext(os.path.basename(input_path))[0]
-    gray_path = os.path.join(out_dir, f"{base}_clustered_gray.png")
-    idx_path = os.path.join(out_dir, f"{base}_clustered_index.png")
-    meta_path = os.path.join(out_dir, f"{base}_cluster_meta.json")
-    web_gray_path = f"../temp2/{base}_clustered_gray.png"
-    cv2.imwrite(gray_path, gray_clustered)
-    #cv2.imwrite(idx_path, index_img)
-    meta = {
-        "input": input_path,
-        "clustered_gray": web_gray_path,
-        "clustered_index": idx_path,
+
+    ok, encoded = cv2.imencode(".png", gray_clustered)
+    if not ok:
+        raise ValueError("Failed to encode clustered image")
+    return {
+        "clustered_gray_bytes": encoded.tobytes(),
+        "content_type": "image/png",
         "n_segments": int(n_segments),
         "n_shades_chosen": int(k),
         "cluster_centers_L": [float(c) for c in centers],
         "segment_counts": [int(c) for c in counts.tolist()],
     }
-    return meta
+
+
+def resize_rgb(img_rgb: np.ndarray, max_dim: int = 1200) -> np.ndarray:
+    h, w = img_rgb.shape[:2]
+    scale = min(1.0, float(max_dim) / max(w, h))
+    if scale < 1.0:
+        new_w, new_h = int(w * scale), int(h * scale)
+        img_rgb = cv2.resize(img_rgb, (new_w, new_h), interpolation=cv2.INTER_AREA)
+    return img_rgb
+
+def decode_image_bytes(blob: bytes) -> np.ndarray:
+    arr = np.frombuffer(blob, dtype=np.uint8)
+    bgr = cv2.imdecode(arr, cv2.IMREAD_COLOR)
+    if bgr is None:
+        raise ValueError("Invalid image bytes")
+    return cv2.cvtColor(bgr, cv2.COLOR_BGR2RGB)

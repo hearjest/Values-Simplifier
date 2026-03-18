@@ -11,15 +11,15 @@ class ProcessMethod(ABC):
 
 class kMeans(ProcessMethod):
     def process(self,params):
-        res = shade_clustering.cluster_shades(params.data['filePath'], '../temp2')
+        img_rgb = shade_clustering.decode_image_bytes(params)  # bytes -> np.ndarray
+        res = shade_clustering.cluster_shades_array(img_rgb)
         return res
         
-
+#params.data['filePath]
 
 class methodFactory:
     @staticmethod
     def create(method:str):
-        print(method)
         if method == 'kMeans':
             return kMeans()
         else:

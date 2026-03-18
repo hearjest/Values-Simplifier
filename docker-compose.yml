@@ -7,6 +7,7 @@ services:
     ports:
       - "3000:3000"
     environment:
+      MINIO_PORT: "9000"
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
@@ -18,12 +19,17 @@ services:
       REDIS_HOST: redis
       PORT: 3000
       MINIO_BUCKET1: processed
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "300"
     depends_on:
       - postgres
       - redis
-      - minio
+      - minio 
     volumes:
+      - .:/app #remove for nondev
+      - /app/node_modules #remove for nondev
       - ./temp:/app/temp
+    command: npx nodemon back/server.js #remove for nondev
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/checkHealth', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
@@ -49,9 +55,11 @@ services:
       - redis
       - minio
     volumes:
+      - .:/app
       - ./temp:/app/temp
       - ./temp2:/app/temp2
-    command: python worker.py
+    #command: python worker.py #remove the one below for nondev and reenable this
+    command: python -m watchfiles "python back/worker/worker.py" /app/back/worker 
     restart: unless-stopped
 
   postgres:
@@ -80,6 +88,7 @@ services:
     environment:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_PORT: "9000"
     command: server /data --console-address ":9001"
     ports:
       - "9000:9000"
@@ -88,7 +97,6 @@ services:
       - minio_data:/data
       - ./temp2:/app/temp
     restart: unless-stopped
-
 volumes:
   pgdata:
   redisdata:

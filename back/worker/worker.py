@@ -11,6 +11,7 @@ from minio.error import S3Error
 from processMethodFactory import methodFactory
 from redis.asyncio import Redis
 import json
+from io import BytesIO
 load_dotenv()
 from monitoring.logger import log,structlog
 
@@ -33,27 +34,34 @@ async def process(job, token):
     )
     jobType=job.data["jobType"]
     processor = methodFactory.create(jobType)
-    
     await jobLogger.ainfo("Job processing")
     try:
-        res = processor.process(job)
-    except:
-        await jobLogger.error("Job processing failed")
-
-    layer="{}-{}"
-    fileName=layer.format(job.data['userId'],job.data["fileName"])
-    objectKey = fileName
-
-    await jobLogger.ainfo("Uploading to bucket",objectKey=objectKey);
-    try:
-        result = client.fput_object(bucket, objectKey, res['clustered_gray'])    
-    except S3Error as e:
-        jobLogger.ainfo("Failed to upload", exception=e)
+        file = client.get_object(bucket,job.data["fileName"])
+        blob = file.read();
+        res = processor.process(blob)
+        layer="{}-{}"
+        temp=job.data["fileName"]
+        fileName=layer.format(job.data["fileName"],"processed")
+        objectKey = fileName
+        await jobLogger.ainfo("Uploading to bucket",objectKey=objectKey);
+        out_bytes = res["clustered_gray_bytes"]
+        client.put_object(
+            bucket_name=bucket,
+            object_name=objectKey,
+            data=BytesIO(out_bytes),
+            length=len(out_bytes),
+            content_type=res.get("content_type", "image/png"),
+        )
+        puburl = os.getenv("MINIO_PUBLIC_URL", f"http://localhost:{minio_port}")
+        directurl = f"{puburl}/{bucket}/{objectKey}"
+    except Exception as e: 
+        await jobLogger.aerror("Job processing failed",exception=str(e));
+    finally:
+        file.close();
+        file.release_conn();
+        return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":temp,"url":directurl,"userId":job.data['userId']}
+    return None
     
-    puburl = os.getenv("MINIO_PUBLIC_URL", f"http://localhost:{minio_port}")
-    directurl = f"{puburl}/{bucket}/{objectKey}"
-    await jobLogger.ainfo('')
-    return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":res['input'],"url":directurl,"userId":job.data['userId']}
 
 async def main():
     shutdown_event = asyncio.Event()

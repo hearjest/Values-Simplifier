@@ -303,6 +303,7 @@
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
             const formData=new FormData(form);
+            let file=document.getElementById('fileInput').files[0];
             const socket=io();
             socket.on("completed",({jobId, url})=>{
                         const img=document.createElement('img'); img.src=url;
@@ -314,23 +315,79 @@
             });
             
             try {
-                const response=await fetch('/api/upload', {
-                    method: 'POST',
-                    credentials: 'include',
-                    body: formData
-                });
+                // const response=await fetch('/api/upload', {
+                //     method: 'POST',
+                //     credentials: 'include',
+                //     body: formData
+                // });
                 
-                const result=await response.json();
-                if (response.ok) {
-                    message.textContent=result.message;
-                    message.className='message success';
-                    socket.emit("subTo",result.jobId)
-                    
-                } else {
-                    message.textContent=result.message || 'Upload failed';
-                    message.className='message error';
-                }
+                // const result=await response.json();
+                // if (response.ok) {
+                //     message.textContent=result.message;
+                //     message.className='message success';
+                //     socket.emit("subTo",result.jobId)
+                //     const url = result.url;
+                //     try{//need to add chunking + chunkid generation and status storage in db
+                        
+                //     }catch(e){
+
+                //     }
+                // } else {
+                //     message.textContent=result.message || 'Upload failed';
+                //     message.className='message error';
+                // }
+                
             } catch (error) {
+                message.textContent='An error occurred while uploading the file';
+                message.className='message error';
+            }
+
+            try{
+                const presignRes=await fetch('/api/upload', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body:JSON.stringify( {
+                        "fileName":file.name,
+                        "mimeType":file.type,
+                        "size":file.size,
+                    }), 
+                });
+                if(presignRes.ok){
+                    console.log("Uploaded metadata!")
+                }
+                const {url,newFileName,uuid} = await presignRes.json()
+                console.log(url);
+                const putRes = await fetch(url, {
+                            method: "PUT",
+                            headers:{
+                                "Content-Type": file.type || "application/octet-stream",
+                            },
+                            body:file,
+                        });
+                    if (!putRes.ok) throw new Error("Upload failed");
+                    message.textContent="Uploaded,probably";
+                if(putRes.ok){
+                    console.log("Uploaded putres?")
+                } 
+                socket.emit("subTo",uuid)
+                const method=document.getElementById('method');
+                const conc=method.value
+                console.log(conc)
+                const resUploadCom=await fetch("/api/upload/job", {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        method:conc,
+                        uuid:uuid,
+                        newFileName:newFileName,
+                        size:file.size,
+                        mimetype:file.type
+                    })
+                });
+            }catch(e){
                 message.textContent='An error occurred while uploading the file';
                 message.className='message error';
             }

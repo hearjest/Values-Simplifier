@@ -1,9 +1,9 @@
 import express from 'express';
-import multer from 'multer';
+//import multer from 'multer';
 import {verifyToken} from './util/jwtVerify.js'
 import {uploadLimiterrateLimit,loginLimiterrateLimit} from './util/ratelimiters.js'
-const mem=multer.memoryStorage();
-const upload=multer({storage:mem});
+// const mem=multer.memoryStorage();
+// const upload=multer({storage:mem});
 
 
 function makeRoutes(auth,jobs,health){
@@ -79,28 +79,50 @@ function makeRoutes(auth,jobs,health){
 
 
 //-------------------------------------------
-  routes.post('/upload',uploadLimiterrateLimit, verifyToken, upload.single('img'), async (req, res) => {
+  routes.post('/upload',uploadLimiterrateLimit, verifyToken, async (req, res) => {
     try{
         const userId=req.user.id;
-        const fileName=req.file.originalname;
-        req.log.info({userId, fileName, fileSize:req.file.size}, 'Upload started');
         if(!userId) {
           req.log.error('User ID not found in token');
           return res.status(401).json({message:'User ID not found in token'});
        }
-        let job=await jobs.createJob(
-          userId,
-          req.file.buffer,
-          req.file.originalname,
-          req.body,
-        );
-        req.log.info({userId, fileName, jobId:job.jobId}, 'Upload queued successfully');
-        res.json({message:'img in queue now', jobId:job.jobId});
+        const fileName=req.body.fileName;
+        req.log.info({userId, fileName, fileSize:req.body.size}, 'Upload started');
+        const presigned = await jobs.obtainPresigned({
+          "userId":userId,
+          "fileName":fileName,
+          "mimeType":req.body.mimeType,
+          "size":req.body.size,
+        })
+        res.json({message:'Got presigned!',url:presigned.url,newFileName:presigned.newPath,uuid:presigned.uuid});
    }catch(e){
-      req.log.error({err:e, userId:req.user?.id, fileName:req.file?.originalname}, 'Upload failed');
+      req.log.error({err:e, userId:req.user?.id, fileName:req.body.fileName}, 'Upload failed');
       res.status(500).json({message:'Error uploading file'});
    }
  });
+
+
+//-------------------------------------------
+routes.post('/upload/job',verifyToken, async(req,res)=>{
+  const userId=req.user.id;
+  if(!userId) {
+    req.log.error('User ID not found in token');
+    return res.status(401).json({message:'User ID not found in token'});
+  }
+  req.log.info({userId:userId},"JOB?!?!??!?!?!?!")
+  let job=await jobs.createJob(
+          userId,
+          req.body.fileName,
+          req.body.method,
+          req.body.uuid,
+          req.body.newFileName,
+          req.body.mimetype,
+          req.body.size
+        );
+        req.log.info({userId:userId, fileName:req.body.fileName, jobId:job.jobId}, 'Upload queued successfully');
+        res.json({message:'img in queue now', jobId:job.jobId});
+})
+
 
 
 

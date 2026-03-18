@@ -19,17 +19,17 @@ class queueEventEmits{
             try{
                 jobRep.updateJob(returnvalue.original_path,returnvalue.path)
             }catch(error){
-                loggy.error({jobId:jobId,jobStatus:'Failed to update DB'},`Job ${jobId} DB updated failed`)
+                loggy.error({jobId:jobId,jobStatus:'Failed to update DB',error:error},`Job ${jobId} DB updated failed`)
             }
             try{
                 await connection.del(`users:${returnvalue.userId}:urls`);
             }catch(error){
-                loggy.error({jobId:jobId,jobStatus:"Failed to delete key in redis"})
+                loggy.error({jobId:jobId,jobStatus:"Failed to delete key in redis",error:error})
             }
             try{
-                io.to(`Job:${jobId}`).emit("completed",{jobId, url: returnvalue.url})
+                io.to(`Job:${returnvalue.original_path}`).emit("completed",{jobId, url: returnvalue.url})
             }catch(error){
-                loggy.error({jobId:jobId,jobStatus:'Failed to send completion status to socket'},`Job ${jobId} completion notification socket failed`)
+                loggy.error({jobId:jobId,jobStatus:'Failed to send completion status to socket',error:error},`Job ${jobId} completion notification socket failed`)
             }
             
         });

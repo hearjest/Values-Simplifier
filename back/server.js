@@ -8,7 +8,7 @@ import {createServer} from 'http';
 import {initialize,getIO} from './comm/socket_dot_io.js'
 import {sql} from './comm/dbConnection.js'
 import dq from './comm/queue.js'
-import {minioClient} from './comm/minioConn.js'
+import {minioClient,minPubCli} from './comm/minioConn.js'
 import dotenv from 'dotenv';
 import { UserRepo } from './repos/userRep.js';
 import { jobRepo } from './repos/jobRep.js';
@@ -21,15 +21,15 @@ import pinoHttp from 'pino-http'
 import {logger} from './monitoring/logger.js'
 import {asyncStorage} from './monitoring/context.js'
 import { v4 as uuidv4 } from 'uuid';
-import {ipKeyGenerator, rateLimit} from 'express-rate-limit'
+import  {rateLimit} from 'express-rate-limit'
 import {RedisStore} from 'rate-limit-redis'
-import {uploady} from './service/uploader.js'
+//import {uploady} from './service/uploader.js'
 dotenv.config();
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const app = express();
-const limit=rateLimit({
+rateLimit({
   windowMs:60000*60,
   limit:15,
   message:{error:"You've reached the maximum amount of requests for uploads"},
@@ -60,8 +60,8 @@ io.on("connection",(socket)=>{
 const userrep=new UserRepo(sql);
 const jobrep=new jobRepo(sql);
 const auth=new generalAuth(userrep);
-const jobs=new Job(jobrep,minioClient,connection);
-const queueEventEmitter=new queueEventEmits(jobrep,minioClient);
+const jobs=new Job(jobrep,minioClient,connection,minPubCli);
+new queueEventEmits(jobrep,minioClient);
 app.use((req, res, next) =>{
   const requestId = uuidv4();
   req.id = requestId;
