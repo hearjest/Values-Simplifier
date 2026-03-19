@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     name: run playwright
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
 
     services:
       postgres:
