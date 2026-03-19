@@ -362,3 +362,24 @@ img:hover {
 #regPassword:valid{
     outline-color:green;
 }
+
+#THE-CAGE{
+    position:absolute;
+    visibility:hidden
+}
+
+#thelionsden{
+    position:block
+}
+
+#thing{
+    position:absolute;
+    opacity:0.2;
+    max-width:74%;
+    max-height:75%;
+}
+
+#why{
+    width:auto;
+    height:auto;
+}
