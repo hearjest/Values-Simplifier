@@ -13,7 +13,6 @@ closeUpImg.addEventListener('click', () => {
     window.open(closeUpImg.src);
 });
 
-// Add image to the image gallery with options menu
 function addImgToBox(imgBox, link) {
     let container = document.createElement('div');
     container.className = 'image-container';

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="login-hero.css">
+</head>
+<body>
+    <main class="login-shell" aria-label="Login page">
+        <section class="showcase" aria-hidden="true">
+            <div class="showcase-overlay"></div>
+            <div class="showcase-credit">Photo by Aleksandr Popadin</div>
+        </section>
+
+        <section class="auth-panel">
+            <div class="brand">
+                <div class="brand-mark"></div>
+                <span>UI Unicorn</span>
+            </div>
+
+            <h1>Nice to see you again</h1>
+
+            <form class="login-form" action="#" method="post">
+                <div class="field">
+                    <label for="identity">Email or phone number</label>
+                    <input id="identity" type="text" name="identity" placeholder="Email or phone number" autocomplete="username">
+                </div>
+
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="password-wrap">
+                        <input id="password" type="password" name="password" placeholder="Enter password" autocomplete="current-password">
+                        <button type="button" class="eye-toggle" aria-label="Show password">◉</button>
+                    </div>
+                </div>
+
+                <div class="meta-row">
+                    <label class="remember">
+                        <input type="checkbox" name="remember">
+                        <span>Remember me</span>
+                    </label>
+                    <a href="#" class="forgot">Forgot password?</a>
+                </div>
+
+                <button class="primary-btn" type="submit">Sign in</button>
+
+                <div class="separator" aria-hidden="true"></div>
+
+                <button class="google-btn" type="button">G&nbsp; Or sign in with Google</button>
+
+                <p class="register-copy">Don't have an account? <a href="#">Sign up now</a></p>
+            </form>
+
+            <footer class="panel-footer">
+                <span>@uiunicorn</span>
+                <span>Perfect Login 2021</span>
+            </footer>
+        </section>
+    </main>
+</body>
+</html>

@@ -1,7 +1,5 @@
-// Authentication logic
-/* global loadUserImages */
-
 const authContainer = document.getElementById('authContainer');
+const loginShell = document.getElementById('loginShell');
 const loginForm = document.getElementById('loginForm');
 const registerForm = document.getElementById('registerForm');
 const authMessage = document.getElementById('authMessage');
@@ -9,7 +7,6 @@ const showRegister = document.getElementById('showRegister');
 const showLogin = document.getElementById('showLogin');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// Initialize auth on page load
 checkAuthStatus();
 
 async function checkAuthStatus() {
@@ -30,7 +27,11 @@ async function checkAuthStatus() {
 }
 
 async function showUploadSection() {
-    authContainer.style.display = 'none';
+    if (loginShell) {
+        loginShell.style.display = 'none';
+    } else {
+        authContainer.style.display = 'none';
+    }
     document.getElementById('uploadContainer').style.display = 'block';
     await loadUserImages();
 }
@@ -79,7 +80,6 @@ loginForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Register handler
 registerForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const userName = document.getElementById('regUsername').value;
@@ -108,7 +108,6 @@ registerForm.addEventListener('submit', async (e) => {
     }
 });
 
-// Logout handler
 logoutBtn.addEventListener('click', async () => {
     try {
         await fetch('/api/logout', {
@@ -118,33 +117,57 @@ logoutBtn.addEventListener('click', async () => {
     } catch (error) {
         console.error('Logout error',error);
     }
-    authContainer.style.display = 'block';
+    if (loginShell) {
+        loginShell.style.display = 'grid';
+    } else {
+        authContainer.style.display = 'block';
+    }
     document.getElementById('uploadContainer').style.display = 'none';
 });
 
-// Password validation (called from HTML oninput)
-// eslint-disable-next-line no-unused-vars
-function val(input) {
-    const value = input.value;
+function validateForm() {
+    const usernameInput = document.getElementById('regUsername');
+    const passwordInput = document.getElementById('regPassword');
+    const username = usernameInput.value;
+    const password = passwordInput.value;
     const errors = [];
-    if (value.length < 8) {
-        errors.push("At least 8 characters");
+
+    if (username.length < 4 && username.length > 0) {
+        errors.push("Username: At least 4 characters");
     }
-    if (!/[A-Z]/.test(value)) {
-        errors.push("At least 1 capital letter");
+    if (username && !/^[a-zA-Z0-9_-]+$/.test(username)) {
+        errors.push("Username: Only letters, numbers, underscore, and hyphen allowed");
     }
-    if (!/[!@#$%^&*()]/.test(value)) {
-        errors.push("At least 1 special character");
+
+    if (password.length < 8 && password.length > 0) {
+        errors.push("Password: At least 8 characters");
     }
+    if (password && !/[A-Z]/.test(password)) {
+        errors.push("Password: At least 1 capital letter");
+    }
+    if (password && !/[!@#$%^&*()]/.test(password)) {
+        errors.push("Password: At least 1 special character");
+    }
+
     const button = document.getElementById('registerbutton');
-    const errorEl = document.getElementById("error");
+    const errorEl = document.getElementById('error');
+
     if (errors.length > 0) {
-        input.setCustomValidity(errors.join(", "));
+        usernameInput.setCustomValidity(errors.join(", "));
+        passwordInput.setCustomValidity(errors.join(", "));
         errorEl.textContent = errors.join(", ");
         button.disabled = true;
-    } else {
-        input.setCustomValidity("");
+    } else if (username || password) {
+        usernameInput.setCustomValidity("");
+        passwordInput.setCustomValidity("");
         errorEl.textContent = "";
         button.disabled = false;
+    } else {
+        button.disabled = true;
+        errorEl.textContent = "";
     }
+}
+
+function val(input) {
+    validateForm();
 }

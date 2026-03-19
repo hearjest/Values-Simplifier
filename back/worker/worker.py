@@ -51,6 +51,7 @@ async def process(job, token):
         )
         puburl = os.getenv("MINIO_PUBLIC_URL", f"http://localhost:{minio_port}")
         directurl = f"{puburl}/{bucket}/{objectKey}"
+        
     except Exception as e: 
         await jobLogger.aerror("Job processing failed",exception=str(e));
     finally:
