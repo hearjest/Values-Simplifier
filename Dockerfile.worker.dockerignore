@@ -3,3 +3,4 @@
 !back/worker/
 !back/worker/**
 !.env
+!tests/
