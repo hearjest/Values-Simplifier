@@ -67,9 +67,7 @@ jobs:
           exit 1
     
       - name: Run tests
-        run: | 
-          "npx playwright install \ 
-          npx playwright test -c tests/playwright.config.js"
+        run: npx playwright install --with-deps
         env:
           CI: true
     
