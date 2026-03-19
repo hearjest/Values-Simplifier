@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     name: run playwright
-    runs-on: debian-latest
+    runs-on: ubuntu-latest
 
     services:
       postgres:
@@ -36,44 +36,44 @@ jobs:
 
         ports:
           - 6379:6379
-steps:
-  - name: Checkout code
-    uses: actions/checkout@v4
-
-  - name: Set up Node.js
-    uses: actions/setup-node@v4
-    with:
-      node-version: 22
-      cache: npm
-
-  - name: Install dependencies
-    run: npm ci
-
-  - name: Start MinIO
-    run: |
-      docker run -d --name minio \
-        -p 9000:9000 -p 9001:9001 \
-        -e MINIO_ROOT_USER="${{ secrets.MINIO_ROOT_USER }}" \
-        -e MINIO_ROOT_PASSWORD="${{ secrets.MINIO_ROOT_PASSWORD }}" \
-        minio/minio:latest server /data --console-address ":9001"
-
-  - name: Wait for MinIO health
-    run: |
-      for i in {1..30}; do
-        curl -fsS http://localhost:9000/minio/health/live && exit 0
-        sleep 2
-      done
-      echo "MinIO did not become healthy in time??"
-      exit 1
-
-  - name: Run tests
-    run: npx playwright test -c tests/playwright.config.js
-    env:
-      CI: true
-
-  - name: Cleanup
-    if: always()
-    run: docker rm -f minio || true
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+    
+      - name: Install dependencies
+        run: npm ci
+    
+      - name: Start MinIO
+        run: |
+          docker run -d --name minio \
+            -p 9000:9000 -p 9001:9001 \
+            -e MINIO_ROOT_USER="${{ secrets.MINIO_ROOT_USER }}" \
+            -e MINIO_ROOT_PASSWORD="${{ secrets.MINIO_ROOT_PASSWORD }}" \
+            minio/minio:latest server /data --console-address ":9001"
+    
+      - name: Wait for MinIO health
+        run: |
+          for i in {1..30}; do
+            curl -fsS http://localhost:9000/minio/health/live && exit 0
+            sleep 2
+          done
+          echo "MinIO did not become healthy in time??"
+          exit 1
+    
+      - name: Run tests
+        run: npx playwright test -c tests/playwright.config.js
+        env:
+          CI: true
+    
+      - name: Cleanup
+        if: always()
+        run: docker rm -f minio || true
 
   build-and-push:
     name: Build and Push Docker Image
