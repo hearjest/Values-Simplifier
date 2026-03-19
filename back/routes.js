@@ -94,6 +94,7 @@ function makeRoutes(auth,jobs,health){
           "mimeType":req.body.mimeType,
           "size":req.body.size,
         })
+        console.log("routes",presigned.newPath)
         res.json({message:'Got presigned!',url:presigned.url,newFileName:presigned.newPath,uuid:presigned.uuid});
    }catch(e){
       req.log.error({err:e, userId:req.user?.id, fileName:req.body.fileName}, 'Upload failed');

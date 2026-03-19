@@ -1,13 +1,8 @@
-// File upload logic
-/* global io, addImgToBox */
-
-const uploadContainer = document.getElementById('uploadContainer');
 const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const message = document.getElementById('message');
 const uploadText = document.querySelector('.upload-text');
 
-// Update display text when file is selected
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
         uploadText.textContent = e.target.files[0].name;
@@ -16,18 +11,16 @@ fileInput.addEventListener('change', (e) => {
     }
 });
 
-// Handle file upload form submission
-form.addEventListener('submit', async () => {
+form.addEventListener('submit', async (e) => {
+    e.preventDefault();
     const file = document.getElementById('fileInput').files[0];
+    // eslint-disable-next-line
     const socket = io();
     
     socket.on("completed", ({ url }) => {
-        const img = document.createElement('img');
-        img.src = url;
-        uploadContainer.append(img);
         let imgBox = document.getElementById('imgBox');
+        // eslint-disable-next-line
         addImgToBox(imgBox, url);
-        console.log("Closing socket");
         socket.disconnect();
     });
 
@@ -54,11 +47,11 @@ form.addEventListener('submit', async () => {
             body: file,
         });
         if (!putRes.ok) throw new Error("Upload failed");
-        message.textContent = "Uploaded,probably";
+        message.textContent = "Upload success!";
         if (putRes.ok) {
             console.log("Uploaded putres?");
         }
-        socket.emit("subTo", uuid);
+        socket.emit("subTo", newFileName);
         const method = document.getElementById('method');
         const conc = method.value;
         await fetch("/api/upload/job", {
@@ -74,13 +67,13 @@ form.addEventListener('submit', async () => {
                 mimetype: file.type
             })
         });
+        
     } catch {
         message.textContent = 'An error occurred while uploading the file';
         message.className = 'message error';
     }
 });
 
-// Health check button listener
 document.getElementById('funnybutton').addEventListener('click', async () => {
     console.log(await fetch('/api/checkHealth', {
         method: 'GET',

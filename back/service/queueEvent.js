@@ -27,7 +27,7 @@ class queueEventEmits{
                 loggy.error({jobId:jobId,jobStatus:"Failed to delete key in redis",error:error})
             }
             try{
-                io.to(`Job:${returnvalue.original_path}`).emit("completed",{jobId, url: returnvalue.url})
+                io.to(`Job:${returnvalue.preProcessedPath}`).emit("completed",{jobId, url: returnvalue.url})
             }catch(error){
                 loggy.error({jobId:jobId,jobStatus:'Failed to send completion status to socket',error:error},`Job ${jobId} completion notification socket failed`)
             }

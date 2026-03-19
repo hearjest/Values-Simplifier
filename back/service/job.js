@@ -1,11 +1,8 @@
 import dq from '../comm/queue.js'
 import {v4 as uuidv4} from 'uuid';
-import path from 'path';
-import fs from 'fs/promises';
 import dotenv from 'dotenv';
 dotenv.config();
 import {logger} from '../monitoring/logger.js'
-import Module from 'module';
 const loggy=logger.child({Module:'JobRepo'})
 class Job{
     constructor(jobRep,minioClient,redis,minPubCli){
@@ -21,7 +18,6 @@ class Job{
      * 
      */
     async createJob(userId, originalName, method,uuid,newFilePath,mimeType,size){
-        const pathForWorker=`${uuid}-${originalName}`;
         //const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
         try{
             loggy.info({userId:userId, function:'createJob'},"Writing file")
@@ -34,15 +30,15 @@ class Job{
         const jobType=method
         try{
             loggy.info({userId:userId, function:'createJob'},"Adding job to database")
-            await this.jobRep.addJob(uuid, userId, newFilePath,jobType|null);
+            await this.jobRep.addJob(uuid, userId, originalName,jobType|null);
         }catch(error){
             loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
         }
         try{
             loggy.info({userId:userId, function:'createJob'},"Adding job to bullmq queue")
             const job =await dq.add('process-image',
-                {filePath:newFilePath,
-                fileName:newFilePath,
+                {newFilePath:newFilePath,
+                originalFilePath:originalName,
                 uid: uuid, 
                 userId:userId,
                 jobType:jobType
@@ -73,7 +69,7 @@ class Job{
                 const bucket = process.env.MINIO_BUCKET1;
                 for(let i=0;i<paths.length;i++){
                     try{
-                        let status=await this.minioClient.statObject(bucket, paths[i]['processed_path']);
+                        await this.minioClient.statObject(bucket, paths[i]['processed_path']);
                         url = `${publicMinioUrl}/${bucket}/${paths[i]['processed_path']}`;
                         urls.push(url)
                     }catch(err){
@@ -107,7 +103,7 @@ class Job{
     }
 
     async obtainPresigned(fileDetails){//need another method to add to db
-        const {userId,fileName, mimeType, sizeGB}=fileDetails
+        const {userId,fileName}=fileDetails
         const uuid = uuidv4();
         const status={
             "url":'',
@@ -121,6 +117,8 @@ class Job{
             status.url=url;
             status.res='Success';
             status.newPath=newFileName
+            console.log("BUUHUHUHUHUHUHUHU")
+            console.log("status",status.newPath)
             return status;
         } catch(e){
             console.log(e)
@@ -128,11 +126,6 @@ class Job{
             return status
         }
     }
-
-    async sendFileMetaDataToDB(fileDetails){
-        const {userId,fileName, mimeType, sizeGB}=fileDetails
-    }
-
     
 }
 

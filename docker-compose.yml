@@ -3,7 +3,8 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.app
+      target: dev
     ports:
       - "3000:3000"
     environment:
@@ -18,7 +19,7 @@ services:
       MINIO_PUBLIC_URL: ${MINIO_PUBLIC_URL:-http://localhost:9000}
       REDIS_HOST: redis
       PORT: 3000
-      MINIO_BUCKET1: processed
+      MINIO_BUCKET1: processed 
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "300"
     depends_on:

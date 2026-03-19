@@ -1,0 +1,5 @@
+**
+!back/
+!back/worker/
+!back/worker/**
+!.env

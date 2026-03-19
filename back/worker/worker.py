@@ -1,5 +1,3 @@
-import inspect
-import sys
 import asyncio
 import signal
 from bullmq import Worker
@@ -36,12 +34,11 @@ async def process(job, token):
     processor = methodFactory.create(jobType)
     await jobLogger.ainfo("Job processing")
     try:
-        file = client.get_object(bucket,job.data["fileName"])
+        file = client.get_object(bucket,job.data["newFilePath"])
         blob = file.read();
         res = processor.process(blob)
         layer="{}-{}"
-        temp=job.data["fileName"]
-        fileName=layer.format(job.data["fileName"],"processed")
+        fileName=layer.format(job.data["newFilePath"],"processed")
         objectKey = fileName
         await jobLogger.ainfo("Uploading to bucket",objectKey=objectKey);
         out_bytes = res["clustered_gray_bytes"]
@@ -59,7 +56,7 @@ async def process(job, token):
     finally:
         file.close();
         file.release_conn();
-        return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":temp,"url":directurl,"userId":job.data['userId']}
+        return {"status": "completed", "jobId": job.id,"path": objectKey,"original_path":job.data["originalFilePath"],"url":directurl,"userId":job.data['userId'],"preProcessedPath":job.data["newFilePath"]}
     return None
     
 
