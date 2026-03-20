@@ -100,12 +100,20 @@ jobs:
         env: 
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
+          POSTGRES_DB: ${{secrets.POSTGRES_DB}}
+          POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+          MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
+          MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
         run: docker compose -f docker-compose.yml build app worker --no-cache
         
       - name: pushes image to docker
         env:
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
+          POSTGRES_DB: ${{secrets.POSTGRES_DB}}
+          POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+          MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
+          MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
         run: docker compose  -f docker-compose.yml push up app worker
         
 
