@@ -102,6 +102,7 @@ jobs:
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
           POSTGRES_DB: ${{secrets.POSTGRES_DB}}
           POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
           MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
           MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
         run: docker compose -f docker-compose.yml build app worker --no-cache
@@ -112,6 +113,7 @@ jobs:
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
           POSTGRES_DB: ${{secrets.POSTGRES_DB}}
           POSTGRES_USER: ${{secrets.POSTGRES_USER}}
+          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
           MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
           MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
         run: docker compose  -f docker-compose.yml push up app worker
