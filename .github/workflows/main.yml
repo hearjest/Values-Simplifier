@@ -99,13 +99,13 @@ jobs:
       - name: compose app and worker
         env: 
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
-          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
         run: docker compose -f docker-compose.yml app worker
         
       - name: pushes image to docker
         env:
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
-          DOCKER_PASSWORD: ${{secrets.DOCKER_PASSWORD}}
+          DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
         run: docker compose  -f docker-compose.yml push up app worker --no-cache
         
 
