@@ -116,7 +116,7 @@ jobs:
           POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
           MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
           MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
-        run: docker compose -f docker-compose.yml push app worker
+        run: docker compose ${{secrets.DOCKER_USERNAME}}/valuesimplifier:tag -f docker-compose.yml push
         
 
 #      - name: Build and push multi-arch production image
