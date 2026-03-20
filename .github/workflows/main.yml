@@ -100,13 +100,13 @@ jobs:
         env: 
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
-        run: docker compose -f docker-compose.yml app worker
+        run: docker compose -f docker-compose.yml build app worker --no-cache
         
       - name: pushes image to docker
         env:
           DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
           DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
-        run: docker compose  -f docker-compose.yml push up app worker --no-cache
+        run: docker compose  -f docker-compose.yml push up app worker
         
 
 #      - name: Build and push multi-arch production image
