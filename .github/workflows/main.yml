@@ -18,7 +18,7 @@ jobs:
         env:
           POSTGRES_DB: hi-postgres
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: $${ secrets.POSTGRES_PASS }}
+          POSTGRES_PASSWORD: ${ secrets.POSTGRES_PASS }}
         options: >-
           --health-cmd "pg_isready -U postgres -d hi-postgres"
           --health-interval 10s
@@ -105,6 +105,14 @@ jobs:
           POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
           MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
           MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
+          REDIS_HOST: ${{secrets.REDIS_HOST}}
+          MINIO_HOST: ${{secrets.MINIO_HOST}}
+          MINIO_PORT: ${{secrets.MINIO_PORT}}
+          MINIO_BUCKET1: ${{secrets.MINIO_BUCKET1}}
+          SQL_HOST: ${{secrets.SQL_HOST}}
+          SERVER_HOST: ${{secrets.SERVER_HOST}}
+          NODE_ENV: ${{secrets.NODE_ENV}}
+          JWT_SECRET: ${{secrets.JWT_SECRET}}
         run: docker compose -f docker-compose.yml build app worker --no-cache
         
       - name: pushes image to docker
@@ -116,6 +124,14 @@ jobs:
           POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
           MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
           MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
+          REDIS_HOST: ${{secrets.REDIS_HOST}}
+          MINIO_HOST: ${{secrets.MINIO_HOST}}
+          MINIO_PORT: ${{secrets.MINIO_PORT}}
+          MINIO_BUCKET1: ${{secrets.MINIO_BUCKET1}}
+          SQL_HOST: ${{secrets.SQL_HOST}}
+          SERVER_HOST: ${{secrets.SERVER_HOST}}
+          NODE_ENV: ${{secrets.NODE_ENV}}
+          JWT_SECRET: ${{secrets.JWT_SECRET}}
         run: docker compose -f docker-compose.yml push
         
 
