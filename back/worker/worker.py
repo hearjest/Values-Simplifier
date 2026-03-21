@@ -7,7 +7,6 @@ from dotenv import load_dotenv, dotenv_values
 from minio import Minio
 from minio.error import S3Error
 from processMethodFactory import methodFactory
-from redis.asyncio import Redis
 import json
 from io import BytesIO
 load_dotenv()
@@ -90,14 +89,17 @@ async def main():
     except Exception as e:
         print(f"Error setting up bucket: {e}")
     
-    redis_host = os.getenv("REDIS_HOST", "localhost")
+    redis_host = os.getenv("REDIS_HOST", "redis")
     redis_port = int(os.getenv("REDIS_PORT", "6379"))
     
     print(f"Connecting to Redis at {redis_host}:{redis_port}")
-    redis_connection = Redis(host=redis_host, port=redis_port, decode_responses=True)
+    connection_opts = {
+        "host": redis_host,
+        "port": redis_port,
+    }
     
     print("Starting worker, please wait")
-    worker = Worker("jobs", process, {"connection": redis_connection})
+    worker = Worker("jobs", process, {"connection": connection_opts})
     print("Worker is online.")
     
     await shutdown_event.wait()
