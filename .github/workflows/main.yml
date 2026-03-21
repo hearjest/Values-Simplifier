@@ -18,7 +18,7 @@ jobs:
         env:
           POSTGRES_DB: hi-postgres
           POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: ${ secrets.POSTGRES_PASS }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASS }}
         options: >-
           --health-cmd "pg_isready -U postgres -d hi-postgres"
           --health-interval 10s
@@ -33,22 +33,22 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
         ports:
           - 6379:6379
+
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
-    
+
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
-    
+
       - name: Install dependencies
         run: npm ci
-    
+
       - name: Start MinIO
         run: |
           docker run -d --name minio \
@@ -56,21 +56,23 @@ jobs:
             -e MINIO_ROOT_USER="${{ secrets.MINIO_ROOT_USER }}" \
             -e MINIO_ROOT_PASSWORD="${{ secrets.MINIO_ROOT_PASSWORD }}" \
             minio/minio:latest server /data --console-address ":9001"
-    
+
       - name: Wait for MinIO health
         run: |
           for i in {1..30}; do
             curl -fsS http://localhost:9000/minio/health/live && exit 0
             sleep 2
           done
-          echo "MinIO did not become healthy in time??"
+          echo "MinIO did not become healthy in time"
           exit 1
-    
+
       - name: Run tests
-        run: npx playwright install --with-deps
         env:
           CI: true
-    
+        run: |
+          npx playwright install --with-deps
+          npx playwright test -c tests/playwright.config.js
+
       - name: Cleanup
         if: always()
         run: docker rm -f minio || true
@@ -82,66 +84,26 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v6
-
-     # - name: Extract metadata
-     #   id: meta
-    #    run: |
-       #   echo "REPO_NAME=${GITHUB_REPOSITORY##*/}" >> "$GITHUB_OUTPUT"
-  #        echo "SHORT_SHA=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+        uses: actions/checkout@v4
 
       - name: Log in to Docker Hub
-        uses: docker/login-action@v4
+        uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
-          
-      - name: compose app and worker
-        env: 
-          DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
-          DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
-          POSTGRES_DB: ${{secrets.POSTGRES_DB}}
-          POSTGRES_USER: ${{secrets.POSTGRES_USER}}
-          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
-          MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
-          MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
-          REDIS_HOST: ${{secrets.REDIS_HOST}}
-          MINIO_HOST: ${{secrets.MINIO_HOST}}
-          MINIO_PORT: ${{secrets.MINIO_PORT}}
-          MINIO_BUCKET1: ${{secrets.MINIO_BUCKET1}}
-          SQL_HOST: ${{secrets.SQL_HOST}}
-          SERVER_HOST: ${{secrets.SERVER_HOST}}
-          NODE_ENV: ${{secrets.NODE_ENV}}
-          JWT_SECRET: ${{secrets.JWT_SECRET}}
-        run: docker compose -f docker-compose.yml build app worker --no-cache
-        
-      - name: pushes image to docker
-        env:
-          DOCKER_USERNAME: ${{secrets.DOCKER_USERNAME}}
-          DOCKER_PASSWORD: ${{secrets.DOCKER_PASS}}
-          POSTGRES_DB: ${{secrets.POSTGRES_DB}}
-          POSTGRES_USER: ${{secrets.POSTGRES_USER}}
-          POSTGRES_PASSWORD: ${{secrets.POSTGRES_PASS}}
-          MINIO_ROOT_USER: ${{secrets.MINIO_ROOT_USER}}
-          MINIO_ROOT_PASSWORD: ${{secrets.MINIO_ROOT_PASSWORD}}
-          REDIS_HOST: ${{secrets.REDIS_HOST}}
-          MINIO_HOST: ${{secrets.MINIO_HOST}}
-          MINIO_PORT: ${{secrets.MINIO_PORT}}
-          MINIO_BUCKET1: ${{secrets.MINIO_BUCKET1}}
-          SQL_HOST: ${{secrets.SQL_HOST}}
-          SERVER_HOST: ${{secrets.SERVER_HOST}}
-          NODE_ENV: ${{secrets.NODE_ENV}}
-          JWT_SECRET: ${{secrets.JWT_SECRET}}
-        run: docker compose -f docker-compose.yml push
-        
 
-#      - name: Build and push multi-arch production image
-#        uses: docker/build-push-action@v7
- #       with:
-   #       context: .
-  #        target: prod
-   #       push: true
-    #      platforms: linux/amd64
-     #     tags: |
-      #      ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT_NAME }}:latest
-       #     ${{ secrets.DOCKER_USERNAME }}/${{ secrets.DOCKERHUB_PROJECT_NAME }}:${{ steps.meta.outputs.SHORT_SHA }}
+      - name: Build app and worker with compose
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASS }}
+          MINIO_ROOT_USER: ${{ secrets.MINIO_ROOT_USER }}
+          MINIO_ROOT_PASSWORD: ${{ secrets.MINIO_ROOT_PASSWORD }}
+          MINIO_PUBLIC_URL: http://localhost:9000
+        run: docker compose -f docker-compose.yml build app worker --no-cache
+
+      - name: Push images to Docker Hub
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+        run: docker compose -f docker-compose.yml push app worker
