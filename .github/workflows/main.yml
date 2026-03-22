@@ -103,7 +103,7 @@ jobs:
           MINIO_PUBLIC_URL: http://localhost:9000
         run: docker compose -f docker-compose.yml build app worker --no-cache
 
-      - name: Push images to Docker Hub
-        env:
-          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
-        run: docker compose -f docker-compose.yml push app worker
+#      - name: Push images to Docker Hub
+ #       env:
+  #        DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+   #     run: docker compose -f docker-compose.yml push app worker
