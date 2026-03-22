@@ -9,6 +9,11 @@ It's not perfect, and there are improvements to made to the image processing, bu
 The following is a general flow of how the program works, but note that this was before i threw the server and python worker into containers as well.
 <img width="1100" height="1400" src="https://github.com/user-attachments/assets/17fad36f-30f4-47e8-8ffe-a709d605669d" />
 
+# Note
+I've added options to convert your selected image into this particular cat by rearranging the pixels. Please note that the 2nd option takes ~6 minutes, and the 3rd ~3ish minutes.
+<img width="1174" height="407" alt="image" src="https://github.com/user-attachments/assets/bd01f340-3be4-4a1f-bbba-b9ae8a06d5ac" />
+
+
 
 # INSTALLATION Method 1
 
@@ -27,13 +32,8 @@ Now, make sure you are in the Values-Simplifier. If not, run: <br>
 Then, please view the ```.env.READMEPLS``` file and follow the instructions to create your credentials. <br>
 I know that it's weird to also have a database for logins and whatnot for a personal tool, but I would like to host it as a website. <br>
 Once you finish what is outlined in ```.env.READMEPLS```, now run: <br>
+```docker compose pull``` <br>
 ```docker compose up -d```
-
-# INSTALLATION Method 2
-
-Or... you can download the docker image <a href="https://drive.google.com/file/d/19BmtIQeiJFAjyOCIoyFz2wZGyfZfEfSV/view?usp=sharing">here</a> and run: <br>
-```docker load -i values-simplifier-images.tar```
-
 
 # FILE STRUCTURE
 The main folders you will be looking at is the Values-Simplifier folder, and the subdirectories back and front.
