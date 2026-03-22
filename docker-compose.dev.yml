@@ -1,7 +1,6 @@
 services:
 
   app:
-    image: binguslover/valuesimplifier-app:latest
     build:
       context: .
       dockerfile: Dockerfile.app
@@ -41,7 +40,6 @@ services:
       start_period: 20s
 
   worker:
-    image: ${DOCKER_USERNAME}/valuesimplifier-worker:latest
     build:
       context: .
       dockerfile: Dockerfile.worker

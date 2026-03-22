@@ -40,7 +40,7 @@ async def process(job, token):
         fileName=layer.format(job.data["newFilePath"],"processed")
         objectKey = fileName
         await jobLogger.ainfo("Uploading to bucket",objectKey=objectKey);
-        out_bytes = res["clustered_gray_bytes"]
+        out_bytes = res["outputted_bytes"]
         client.put_object(
             bucket_name=bucket,
             object_name=objectKey,
@@ -53,6 +53,7 @@ async def process(job, token):
         
     except Exception as e: 
         await jobLogger.aerror("Job processing failed",exception=str(e));
+        return;
     finally:
         file.close();
         file.release_conn();
@@ -99,7 +100,12 @@ async def main():
     }
     
     print("Starting worker, please wait")
-    worker = Worker("jobs", process, {"connection": connection_opts})
+    worker = Worker("jobs", process, {
+        "connection": connection_opts,
+        "lockDuration": 600000,  # 10 minutes - increase if jobs still take longer
+        "stalledInterval": 5000,  # Check every 5 seconds
+        "stalledCount": 2,  # Allow 2 stalls before marking as failed
+    })
     print("Worker is online.")
     
     await shutdown_event.wait()

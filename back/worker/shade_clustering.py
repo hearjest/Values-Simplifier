@@ -156,7 +156,7 @@ def cluster_shades_array(
     if not ok:
         raise ValueError("Failed to encode clustered image")
     return {
-        "clustered_gray_bytes": encoded.tobytes(),
+        "outputted_bytes": encoded.tobytes(),
         "content_type": "image/png",
         "n_segments": int(n_segments),
         "n_shades_chosen": int(k),
