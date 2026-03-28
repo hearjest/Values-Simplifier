@@ -25,9 +25,9 @@ const minioClient = (()=>{
 const minPubCli = (()=>{
   try{ 
     return new Minio.Client({ 
-    endPoint: "localhost",   // "localhost"
+    endPoint: publicUrl.hostname,  
     port: 9000,
-    useSSL: false,
+    useSSL: true,
     accessKey: process.env.MINIO_ROOT_USER,
     secretKey: process.env.MINIO_ROOT_PASSWORD,
     region: 'us-east-1',  
