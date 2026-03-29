@@ -145,10 +145,10 @@ routes.post('/upload/job',verifyToken, async(req,res)=>{
 //-------------------------------------------
   routes.get('/checkHealth',async(req,res)=>{
     let report=await health.checkAll();
-    req.log.info({healthy:report.healthy, checks:report.checks}, 'Health check performed');
     if(report.healthy){
       res.status(200).json({checks:report.checks})
    }else{
+      req.log.warn({healthy:report.healthy, checks:report.checks}, 'Warning');
       res.status(500).json({checks:report.checks})
    }
  })

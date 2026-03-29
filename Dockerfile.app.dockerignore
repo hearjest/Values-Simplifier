@@ -2,3 +2,9 @@ node_modules/
 tests/
 back/worker/
 test-results/
+back/worker/
+temp2/
+temp/
+*.py
+*.pyc
+__pycache__/

@@ -98,7 +98,6 @@ class Job {
                         const exists = await this.s3ObjectExists(bucket, paths[i]['processed_path']);
                         if (exists) {
                             url = await this.s3PresignedGetUrl(bucket,paths[i]['processed_path']);
-                            console.log(url)
                             urls.push(url);
                         }
                     } catch (err) {
