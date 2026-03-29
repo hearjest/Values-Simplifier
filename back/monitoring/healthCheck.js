@@ -20,13 +20,32 @@ class health{
         }
     }
 
-    async checkMinio(){
-        try{
-            const res = await this.minio.bucketExists(process.env.MINIO_BUCKET1);
-            return { status: 'ok', message: `Bucket exists: ${res}` };
-        }catch(error){
-            return {status:'failed',message:error}  
-        } 
+    // async checkMinio(){
+    //     try{
+    //         const res = await this.minio.bucketExists(process.env.MINIO_BUCKET1);
+    //         return { status: 'ok', message: `Bucket exists: ${res}` };
+    //     }catch(error){
+    //         return {status:'failed',message:error}  
+    //     } 
+    // }
+
+    async checkS3() {
+        const { HeadBucketCommand } = await import('@aws-sdk/client-s3');
+        const bucket = process.env.S3_BUCKET_NAME;
+        const region = process.env.AWS_REGION;
+        const s3 = new (await import('@aws-sdk/client-s3')).S3Client({
+            region,
+            credentials: {
+                accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+                secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+            },
+        });
+        try {
+            await s3.send(new HeadBucketCommand({ Bucket: bucket }));
+            return { status: 'ok', message: `S3 bucket exists: ${bucket}` };
+        } catch (error) {
+            return { status: 'failed', message: error.message };
+        }
     }
 
     async checkRedis(){
@@ -77,7 +96,7 @@ class health{
     async checkAll(){
         const [db, minio, redis, worker] = await Promise.all([
             this.checkDB(),
-            this.checkMinio(),
+            this.checkS3(),
             this.checkRedis(),
             this.checkWorker()
         ]);

@@ -1,15 +1,14 @@
 import dq from '../comm/queue.js'
-import {v4 as uuidv4} from 'uuid';
-import dotenv from 'dotenv';
-dotenv.config();
-import {logger} from '../monitoring/logger.js'
-const loggy=logger.child({Module:'JobRepo'})
-class Job{
-    constructor(jobRep,minioClient,redis,minPubCli){
-        this.jobRep =jobRep;
-        this.minioClient=minioClient;
-        this.redis=redis;
-        this.minPubCli=minPubCli
+import { v4 as uuidv4 } from 'uuid';
+import { logger } from '../monitoring/logger.js';
+import { s3Client } from '../comm/minioConn.js'; 
+const loggy = logger.child({ Module: 'JobRepo'});
+
+class Job {
+    constructor(jobRep, redis) {
+        this.jobRep = jobRep;
+        this.redis = redis;
+        this.s3Client = s3Client; 
     }
     /**
      * @param {Integer} userId 
@@ -17,113 +16,136 @@ class Job{
      * @param {String} originalName
      * 
      */
-    async createJob(userId, originalName, method,uuid,newFilePath,mimeType,size){
-        //const pathForStorage=path.join('./temp',`${uuid}-${originalName}`);
-        try{
-            loggy.info({userId:userId, function:'createJob'},"Writing file")
+    async createJob(userId, originalName, method, uuid, newFilePath, mimeType, size) {
+        try {
+            loggy.info({ userId: userId, function: 'createJob' }, "Writing file");
             //await fs.writeFile(pathForStorage, fileBuffer);
-            await this.jobRep.addMetaData(uuid,originalName,mimeType,userId,size,newFilePath)
-        }catch(error){
-            loggy.error({userId:userId,function:'createJob',err:error},"Error writing file metadata")
+            await this.jobRep.addMetaData(uuid, originalName, mimeType, userId, size, newFilePath);
+        } catch (error) {
+            loggy.error({ userId: userId, function: 'createJob', err: error }, "Error writing file metadata");
         }
-        
-        const jobType=method
-        try{
-            loggy.info({userId:userId, function:'createJob'},"Adding job to database")
-            await this.jobRep.addJob(uuid, userId, originalName,jobType|null);
-        }catch(error){
-            loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
+        const jobType = method;
+        try {
+            loggy.info({ userId: userId, function: 'createJob' }, "Adding job to database");
+            await this.jobRep.addJob(uuid, userId, originalName);
+        } catch (error) {
+            loggy.error({ userId: userId, function: 'createJob', err: error }, "Error Adding job to database");
         }
-        try{
-            loggy.info({userId:userId, function:'createJob'},"Adding job to bullmq queue")
-            const job =await dq.add('process-image',
-                {newFilePath:newFilePath,
-                originalFilePath:originalName,
-                uid: uuid, 
-                userId:userId,
-                jobType:jobType
-            },
-        {
-            removeOnComplete:true,
-            attempts:3,
-        })
-            return {jobId:job.id}
-        }catch(error){
-            loggy.error({userId:userId,function:'createJob',err:error},"Error Adding job to database")
+        try {
+            loggy.info({ userId: userId, function: 'createJob' }, "Adding job to bullmq queue");
+            const job = await dq.add('process-image',
+                {
+                    newFilePath: newFilePath,
+                    originalFilePath: originalName,
+                    uid: uuid,
+                    userId: userId,
+                    jobType: jobType
+                },
+                {
+                    removeOnComplete: true,
+                    attempts: 3,
+                });
+            return { jobId: job.id };
+        } catch (error) {
+            loggy.error({ userId: userId, function: 'createJob', err: error }, "Error Adding job to database");
         }
     }
 
-    async getImagesForUser(userId){
-        try{
-            loggy.info({userId:userId,method:"getImagesForUser"},`Attempting to get files for user ${userId} via redis' cache`)
-            const cacheResult=await this.redis.getCachedUrls(`users:${userId}:urls`)
+    async s3ObjectExists(bucket, key) {
+        const { HeadObjectCommand } = await import('@aws-sdk/client-s3');
+        await this.s3Client.send(new HeadObjectCommand({ Bucket: bucket, Key: key }));
+        return true;
+    }
 
-            if(cacheResult){
+    async s3RemoveObject(bucket, key) {
+        const { DeleteObjectCommand } = await import('@aws-sdk/client-s3');
+        await this.s3Client.send(new DeleteObjectCommand({ Bucket: bucket, Key: key }));
+        return true;
+    }
+
+    async s3PresignedPutUrl(bucket, key, expiresIn = 900) {
+        const { PutObjectCommand } = await import('@aws-sdk/client-s3');
+        const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+        const command = new PutObjectCommand({ Bucket: bucket, Key: key });
+        const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+        return url;
+
+    }
+
+    async s3PresignedGetUrl(bucket, key, expiresIn = 900) {
+        const { GetObjectCommand } = await import('@aws-sdk/client-s3');
+        const { getSignedUrl } = await import('@aws-sdk/s3-request-presigner');
+        const command = new GetObjectCommand({ Bucket: bucket, Key: key });
+        const url = await getSignedUrl(this.s3Client, command, { expiresIn });
+        return url;
+    }
+
+    async getImagesForUser(userId) {
+        try {
+            loggy.info({ userId: userId, method: "getImagesForUser" }, `Attempting to get files for user ${userId} via redis' cache`);
+            const cacheResult = await this.redis.getCachedUrls(`users:${userId}:urls`);
+
+            if (cacheResult) {
                 return JSON.parse(cacheResult);
-            }else{
-                loggy.info({userId:userId, method:"getImagesForUser"}, `Cache missed`);
+            } else {
+                loggy.info({ userId: userId, method: "getImagesForUser" }, `Cache missed`);
                 const paths = await this.jobRep.getJobsForUser(userId);
-                const urls=[];
-                let url=null;
-                const publicMinioUrl = process.env.MINIO_PUBLIC_URL || 'http://localhost:9000';
-                const bucket = process.env.MINIO_BUCKET1;
-                for(let i=0;i<paths.length;i++){
-                    try{
-                        await this.minioClient.statObject(bucket, paths[i]['processed_path']);
-                        url = `${publicMinioUrl}/${bucket}/${paths[i]['processed_path']}`;
-                        urls.push(url)
-                    }catch(err){
+                const urls = [];
+                let url = null;
+                const bucket = process.env.S3_BUCKET_NAME;
+                for (let i = 0; i < paths.length; i++) {
+                    try {
+                        const exists = await this.s3ObjectExists(bucket, paths[i]['processed_path']);
+                        if (exists) {
+                            url = await this.s3PresignedGetUrl(bucket,paths[i]['processed_path']);
+                            console.log(url)
+                            urls.push(url);
+                        }
+                    } catch (err) {
                         continue;
                     }
                 }
-                this.redis.set(`users:${userId}:urls`,JSON.stringify(urls),"EX",600)
-
+                this.redis.set(`users:${userId}:urls`, JSON.stringify(urls), "EX", 600);
                 return urls;
             }
-            
-        }catch(error){
-            loggy.error({userId:userId,function:'getImagesForUser',err:error},"Error getting files for user")
+        } catch (error) {
+            loggy.error({ userId: userId, function: 'getImagesForUser', err: error }, "Error getting files for user");
         }
-        
     }
 
-    async removeImage(userId,fileName){
-        let hasFileDB=await this.jobRep.hasFile(userId,fileName)
-        let hasFileBucket=await this.minioClient.statObject(process.env.MINIO_BUCKET1,fileName)
-        if(hasFileDB&&hasFileBucket){
-            let result = await this.jobRep.removeFile(fileName);
-            let result2=await this.minioClient.removeObject(process.env.MINIO_BUCKET1,fileName)
-            let result3=await this.redis.del(`users:${userId}:urls`)
-            let newUrls=await this.getImagesForUser(userId)
-            return "success!"
-        }else{
-            return "failed"
-        }
-
+    async removeImage(userId, fileName) {
+        let hasFileDB = await this.jobRep.hasFile(userId, fileName);
+        let hasFileBucket = await this.s3ObjectExists(process.env.S3_BUCKET_NAME, fileName);
+        if (hasFileDB && hasFileBucket) {
+            await this.jobRep.removeFile(fileName);
+            await this.s3RemoveObject(process.env.S3_BUCKET_NAME, fileName);
+            await this.redis.del(`users:${userId}:urls`); 
+            return "success!";
+        } else {
+            return "failed";
+        } 
     }
 
-    async obtainPresigned(fileDetails){//need another method to add to db
-        const {userId,fileName}=fileDetails
+    async obtainPresigned(fileDetails) { 
+        const { userId, fileName } = fileDetails;
         const uuid = uuidv4();
-        const status={
-            "url":'',
-            "res":'Failed',
-            "newPath":"",
-            "uuid":uuid
-        }
-        const newFileName =`${userId}-${uuid}-${fileName}`
-        try{
-            const url = await this.minPubCli.presignedPutObject(process.env.MINIO_BUCKET1,`${newFileName}`);
-            status.url=url;
-            status.res='Success';
-            status.newPath=newFileName
-            console.log("BUUHUHUHUHUHUHUHU")
-            console.log("status",status.newPath)
+        const status = {
+            "url": '',
+            "res": 'Failed',
+            "newPath": "",
+            "uuid": uuid
+        };
+        const newFileName = `${userId}-${uuid}-${fileName}`;
+        try {
+            const url = await this.s3PresignedPutUrl(process.env.S3_BUCKET_NAME, `${newFileName}`);
+            status.url = url;
+            status.res = 'Success';
+            status.newPath = newFileName;
             return status;
-        } catch(e){
-            console.log(e)
-            loggy.warn(({userId:userId,fileName:fileName,e:e},"Failed to upload file"));
-            return status
+        } catch (e) {
+            console.log(e);
+            loggy.warn({ userId: userId, fileName: fileName, e: e }, "Failed to upload file");
+            return status;
         }
     }
     

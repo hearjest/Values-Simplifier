@@ -44,7 +44,8 @@ function addImgToBox(imgBox, link) {
     deleteBtn.className = 'menu-item';
     deleteBtn.textContent = 'Delete';
     deleteBtn.onclick = async () => {
-        let fileName = (link.split("http://localhost:9000/processed/"))[1];
+        const pathname=new URL(link).pathname
+        const fileName=pathname.substring(pathname.lastIndexOf('/') + 1).split('?')[0];
         let res = await fetch("/api/removeImage", {
             method: "POST",
             headers: { 'Content-Type': 'application/json' },

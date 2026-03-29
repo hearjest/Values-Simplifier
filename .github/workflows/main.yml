@@ -10,7 +10,7 @@ on:
 jobs:
   test:
     name: run playwright
-    runs-on: ubuntu-latest
+    runs-on: alpine-latest
 
     services:
       postgres:
@@ -79,7 +79,7 @@ jobs:
 
   build-and-push:
     name: Build and Push Docker Image
-    runs-on: ubuntu-latest
+    runs-on: alpine-latest
     needs: test
 
     steps:

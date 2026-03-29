@@ -1,3 +1,5 @@
+import dotenv from 'dotenv';
+dotenv.config();
 import express from 'express';
 import {makeRoutes} from './routes.js';
 import cors from 'cors';
@@ -8,8 +10,6 @@ import {createServer} from 'http';
 import {initialize,getIO} from './comm/socket_dot_io.js'
 import {sql} from './comm/dbConnection.js'
 import dq from './comm/queue.js'
-import {minioClient,minPubCli} from './comm/minioConn.js'
-import dotenv from 'dotenv';
 import { UserRepo } from './repos/userRep.js';
 import { jobRepo } from './repos/jobRep.js';
 import { generalAuth } from './service/usersLogReg.js';
@@ -24,7 +24,7 @@ import { v4 as uuidv4 } from 'uuid';
 import  {rateLimit} from 'express-rate-limit'
 import {RedisStore} from 'rate-limit-redis'
 //import {uploady} from './service/uploader.js'
-dotenv.config();
+
 const PORT = process.env.PORT || 3000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -59,8 +59,8 @@ io.on("connection",(socket)=>{
 const userrep=new UserRepo(sql);
 const jobrep=new jobRepo(sql);
 const auth=new generalAuth(userrep);
-const jobs=new Job(jobrep,minioClient,connection,minPubCli);
-new queueEventEmits(jobrep,minioClient);
+const jobs = new Job(jobrep, connection);
+new queueEventEmits(jobrep);
 app.use((req, res, next) =>{
   const requestId = uuidv4();
   req.id = requestId;
@@ -94,4 +94,4 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../front')));
 app.use('/temp2', express.static(path.join(__dirname, '../temp2')));
 //app.use(limit);
-app.use('/api', makeRoutes(auth,jobs,new health(sql,minioClient,connection,dq)))
+app.use('/api', makeRoutes(auth, jobs, new health(sql, null, connection, dq))) // S3: pass null for minio

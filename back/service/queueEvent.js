@@ -5,9 +5,8 @@ import {logger} from '../monitoring/logger.js'
 const loggy=logger.child({Module:"Queue Event"})
 
 class queueEventEmits{
-    constructor(jobRep,minio){
+    constructor(jobRep){
         this.jobRep=jobRep;
-        this.minio=minio;
         const io=getIO();
         const queueEvents = new QueueEvents('jobs', { connection });
 
@@ -42,7 +41,6 @@ class queueEventEmits{
         queueEvents.on(
             'progress',
             ({ jobId, data }) => {
-            // jobId received a progress event
             console.log(`Queue Emitter: Job ${jobId} progress: ${data}`);
             },
             );

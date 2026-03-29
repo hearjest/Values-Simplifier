@@ -29,7 +29,7 @@ Then enter the following: <br>
 ```git clone https://github.com/hearjest/Values-Simplifier.git```
 Now, make sure you are in the Values-Simplifier. If not, run: <br>
 ```cd Values-Simplifier```
-Then, please view the ```.env.READMEPLS``` file and follow the instructions to create your credentials. <br>
+Then, please view the ```.env.READMEPLS``` file and follow the instructions to create your AWS S3 credentials and bucket configuration. <br>
 I know that it's weird to also have a database for logins and whatnot for a personal tool, but I would like to host it as a website. <br>
 Once you finish what is outlined in ```.env.READMEPLS```, now run: <br>
 ```docker compose pull``` <br>
@@ -53,7 +53,7 @@ The back directory is the most important. It contains the following subdirectori
     comm
     <ul>
       <li>
-      This is where connections to the (1)postgre database, (2) the minio bucket, (3) the redis connection and subsequently the queue object, and (4) the websocket are made.
+      This is where connections to the (1)postgre database, (2) the AWS S3 bucket, (3) the redis connection and subsequently the queue object, and (4) the websocket are made.
     </li>
     </ul>
   </li> 
@@ -69,7 +69,7 @@ The back directory is the most important. It contains the following subdirectori
     service
     <ul>
       <li>
-        This folder is contains the files that make the API calls to the db (via jobRep and userRep in repos). Minio operations and additions to the queue in redis take place here as well. The bits of code used seemed not significant enough for me to make a file in repos in it. But as of writing, this is probably a better idea, even if just for consistency's sake.
+        This folder contains the files that make the API calls to the db (via jobRep and userRep in repos). AWS S3 operations and additions to the queue in redis take place here as well. The bits of code used seemed not significant enough for me to make a file in repos in it. But as of writing, this is probably a better idea, even if just for consistency's sake.
         <li>
           In addition, queueEvent listens in onto the worker process' progress via the queue's status in redis and reacts based on job beginnings, failures, and completion.
         </li>

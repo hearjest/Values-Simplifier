@@ -1,6 +1,4 @@
 import postgres from 'postgres'
-import dotenv from 'dotenv';
-dotenv.config();
 const sql = postgres({
   host: process.env.SQL_HOST,
   port: 5432,

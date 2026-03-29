@@ -1,42 +1,11 @@
-import * as Minio from 'minio'
-import dotenv from 'dotenv'
+import { S3Client } from '@aws-sdk/client-s3';
 
-dotenv.config();
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+  },
+});
 
-
-const publicUrl = new URL(process.env.MINIO_PUBLIC_URL); // "http://localhost:9000"
-
-const minioClient = (()=>{
-  try{ 
-    return new Minio.Client({ 
-    endPoint: "minio",
-    port: parseInt(publicUrl.port) || 9000,
-    useSSL: publicUrl.protocol==='https:',
-    accessKey: process.env.MINIO_ROOT_USER,
-    secretKey: process.env.MINIO_ROOT_PASSWORD,
-     })
-  }catch(error){
-    console.error(error)
-    console.log("Failed to connect to minio")
-  }
-  
-})();
-
-const minPubCli = (()=>{
-  try{ 
-    return new Minio.Client({ 
-    endPoint: publicUrl.hostname,  
-    port: 9000,
-    useSSL: true,
-    accessKey: process.env.MINIO_ROOT_USER,
-    secretKey: process.env.MINIO_ROOT_PASSWORD,
-    region: 'us-east-1',  
-     })
-  }catch(error){
-    console.error(error)
-    console.log("Failed to connect to minio")
-  }
-  
-})();
-
-export{minioClient,minPubCli}
+export { s3Client };

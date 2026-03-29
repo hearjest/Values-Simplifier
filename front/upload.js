@@ -17,10 +17,10 @@ form.addEventListener('submit', async (e) => {
     // eslint-disable-next-line
     const socket = io();
     
-    socket.on("completed", ({ url }) => {
+    socket.on("completed", ({ url ,oldFilePath}) => {
         let imgBox = document.getElementById('imgBox');
         // eslint-disable-next-line
-        addImgToBox(imgBox, url);
+        addImgToBox(imgBox, url,oldFilePath);
         socket.disconnect();
     });
 
