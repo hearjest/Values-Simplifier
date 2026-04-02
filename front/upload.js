@@ -2,6 +2,35 @@ const form = document.getElementById('uploadForm');
 const fileInput = document.getElementById('fileInput');
 const message = document.getElementById('message');
 const uploadText = document.querySelector('.upload-text');
+const progressContainer = document.getElementById('progressContainer');
+const progressFill = document.getElementById('progressFill');
+const progressLabel = document.getElementById('progressLabel');
+const progressStage = document.getElementById('progressStage');
+
+function setMessageState(state) {
+    message.classList.remove('success', 'error');
+    if (state === 'success' || state === 'error') {
+        message.classList.add(state);
+    }
+}
+
+function updateProgress(percent, stageText, state = 'working') {
+    const safePercent = Math.max(0, Math.min(100, percent));
+
+    if (progressContainer) {
+        progressContainer.style.display = 'block';
+        progressContainer.dataset.state = state;
+    }
+    if (progressFill) {
+        progressFill.style.width = `${safePercent}%`;
+    }
+    if (progressLabel) {
+        progressLabel.textContent = `${Math.round(safePercent)}%`;
+    }
+    if (progressStage && stageText) {
+        progressStage.textContent = stageText;
+    }
+}
 
 fileInput.addEventListener('change', (e) => {
     if (e.target.files.length > 0) {
@@ -14,15 +43,66 @@ fileInput.addEventListener('change', (e) => {
 form.addEventListener('submit', async (e) => {
     e.preventDefault();
     const file = document.getElementById('fileInput').files[0];
+
+    if (!file) {
+        message.textContent = 'Select a file before uploading';
+        setMessageState('error');
+        return;
+    }
+
+    setMessageState();
+    message.textContent = 'Preparing upload...';
+    updateProgress(5, 'Preparing upload...', 'working');
+
     // eslint-disable-next-line
     const socket = io();
-    
-    socket.on("completed", ({ url ,oldFilePath}) => {
-        let imgBox = document.getElementById('imgBox');
-        // eslint-disable-next-line
-        addImgToBox(imgBox, url,oldFilePath);
+    let isClosed = false;
+
+    const closeSocket = () => {
+        if (isClosed) {
+            return;
+        }
+        isClosed = true;
+        socket.off('completed', onCompleted);
+        socket.off('failed', onFailed);
+        socket.off('processBegin', onProcessBegin);
+        socket.off('bucketUpload', onBucketUpload);
         socket.disconnect();
-    });
+    };
+
+    const onCompleted = ({ url, oldFilePath }) => {
+        message.textContent = 'Job is done!';
+        setMessageState('success');
+        updateProgress(100, 'Completed', 'success');
+        const imgBox = document.getElementById('imgBox');
+        // eslint-disable-next-line
+        addImgToBox(imgBox, url, oldFilePath);
+        closeSocket();
+    };
+
+    const onFailed = () => {
+        message.textContent = 'SOMETHING WENT WRONG';
+        setMessageState('error');
+        updateProgress(100, 'Failed', 'error');
+        closeSocket();
+    };
+
+    const onProcessBegin = () => {
+        message.textContent = 'Worker now processing image...';
+        setMessageState();
+        updateProgress(65, 'Worker processing image...', 'working');
+    };
+
+    const onBucketUpload = () => {
+        message.textContent = 'Uploading your processed image to the cloud...';
+        setMessageState();
+        updateProgress(85, 'Uploading processed image...', 'working');
+    };
+
+    socket.on('completed', onCompleted);
+    socket.on('failed', onFailed);
+    socket.on('processBegin', onProcessBegin);
+    socket.on('bucketUpload', onBucketUpload);
 
     try {
         const presignRes = await fetch('/api/upload', {
@@ -35,10 +115,14 @@ form.addEventListener('submit', async (e) => {
                 "size": file.size,
             }),
         });
-        if (presignRes.ok) {
-            console.log("Uploaded metadata!");
+
+        if (!presignRes.ok) {
+            throw new Error('Could not get upload URL');
         }
+
+        updateProgress(20, 'Upload URL ready. Uploading file...', 'working');
         const { url, newFileName, uuid } = await presignRes.json();
+
         const putRes = await fetch(url, {
             method: "PUT",
             headers: {
@@ -47,14 +131,16 @@ form.addEventListener('submit', async (e) => {
             body: file,
         });
         if (!putRes.ok) throw new Error("Upload failed");
+
         message.textContent = "Upload success!";
-        if (putRes.ok) {
-            console.log("Uploaded putres?");
-        }
+        setMessageState();
+        updateProgress(45, 'Upload complete. Scheduling job...', 'working');
+
         socket.emit("subTo", newFileName);
         const method = document.getElementById('method');
         const conc = method.value;
-        await fetch("/api/upload/job", {
+
+        const queueRes = await fetch("/api/upload/job", {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
@@ -67,10 +153,18 @@ form.addEventListener('submit', async (e) => {
                 mimetype: file.type
             })
         });
+
+        if (!queueRes.ok) {
+            throw new Error('Could not queue processing job');
+        }
+
+        updateProgress(55, 'Job queued. Waiting for worker...', 'working');
         
     } catch {
         message.textContent = 'An error occurred while uploading the file';
-        message.className = 'message error';
+        setMessageState('error');
+        updateProgress(100, 'Failed', 'error');
+        closeSocket();
     }
 });
 

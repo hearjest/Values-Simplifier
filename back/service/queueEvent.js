@@ -42,6 +42,7 @@ class queueEventEmits{
             'progress',
             ({ jobId, data }) => {
             console.log(`Queue Emitter: Job ${jobId} progress: ${data}`);
+            io.to(`Job:${jobId}`).emit(data.msg,{jobId})
             },
             );
         }

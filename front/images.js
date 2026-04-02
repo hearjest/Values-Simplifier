@@ -1,9 +1,7 @@
-// Image handling logic
 
 const closeUpBackground = document.getElementById('imgCloseUp');
 const closeUpImg = document.getElementById('closeUp');
 
-// Close-up image modal handlers
 closeUpBackground.addEventListener('click', () => {
     closeUpBackground.style.display = 'none';
     closeUpImg.style.display = 'none';
@@ -14,6 +12,8 @@ closeUpImg.addEventListener('click', () => {
 });
 
 function addImgToBox(imgBox, link) {
+    const cleanup = new AbortController();
+    const { signal } = cleanup;
     let container = document.createElement('div');
     container.className = 'image-container';
     let img = document.createElement('img');
@@ -24,7 +24,7 @@ function addImgToBox(imgBox, link) {
         closeUpImg.style.display = 'block';
         closeUpImg.src = link;
         closeUpImg.target = "_blank";
-    });
+    },{signal});
     let optionsDiv = document.createElement('div');
     optionsDiv.className = 'image-options';
     let optionsBtn = document.createElement('button');
@@ -36,45 +36,45 @@ function addImgToBox(imgBox, link) {
     let downloadBtn = document.createElement('button');
     downloadBtn.className = 'menu-item';
     downloadBtn.textContent = 'Download';
-    downloadBtn.onclick = () => {
+    downloadBtn.addEventListener('onClick',()=>{
         window.open(link, '_blank');
         menu.classList.remove('show');
-    };
+    },{signal});
     let deleteBtn = document.createElement('button');
     deleteBtn.className = 'menu-item';
     deleteBtn.textContent = 'Delete';
-    deleteBtn.onclick = async () => {
-        const pathname=new URL(link).pathname
-        const fileName=pathname.substring(pathname.lastIndexOf('/') + 1).split('?')[0];
-        let res = await fetch("/api/removeImage", {
-            method: "POST",
+    deleteBtn.addEventListener('click', async () => {
+        const pathname = new URL(link).pathname;
+        const fileName = pathname.substring(pathname.lastIndexOf('/') + 1).split('?')[0];
+        const res = await fetch('/api/removeImage', {
+            method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fileName: fileName }),
-            credentials: "include",
+            body: JSON.stringify({ fileName }),
+            credentials: 'include',
         });
         if (res.ok) {
+            cleanup.abort();
             container.remove();
         }
-    };
+}, { once: true,signal });
     menu.append(downloadBtn, deleteBtn);
     optionsDiv.append(optionsBtn, menu);
-    optionsBtn.onclick = (e) => {
+    optionsBtn.addEventListener('click',(e)=>{
         e.stopPropagation();
         document.querySelectorAll('.options-menu.show').forEach(m => {
             if (m !== menu) m.classList.remove('show');
         });
         menu.classList.toggle('show');
-    };
+    },{signal})
     document.addEventListener('click', (e) => {
         if (!container.contains(e.target)) {
             menu.classList.remove('show');
         }
-    });
+    },{signal});
     container.append(optionsDiv, img);
     imgBox.append(container);
 }
 
-// Load user images from the server
 async function loadUserImages() {
     try {
         const response = await fetch('/api/getFiles', {
@@ -95,12 +95,24 @@ async function loadUserImages() {
     }
 }
 
-// Get files button listener
 const getFilesBtn = document.getElementById('getFilesBtn');
 getFilesBtn.addEventListener('click', loadUserImages);
 
-// Sync button listener
 const syncButton = document.getElementById('sync');
 syncButton.addEventListener('click', async () => {
     await loadUserImages();
 });
+
+async function deleteImg(link,container){
+    const pathname=new URL(link).pathname
+        const fileName=pathname.substring(pathname.lastIndexOf('/') + 1).split('?')[0];
+        let res = await fetch("/api/removeImage", {
+            method: "POST",
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ fileName: fileName }),
+            credentials: "include",
+        });
+        if (res.ok) {
+            container.remove();
+        }
+}

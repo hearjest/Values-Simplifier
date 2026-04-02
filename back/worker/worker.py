@@ -28,6 +28,7 @@ async def process(job, token):
         jobType = job.data["jobType"]
         processor = methodFactory.create(jobType)
         await jobLogger.ainfo("Job processing")
+        await job.updateProgress("processBegin")
         file = None
         try:
             s3_obj = s3.get_object(Bucket=bucket, Key=job.data["newFilePath"])
@@ -38,6 +39,8 @@ async def process(job, token):
             fileName = layer.format(job.data["newFilePath"], "processed")
             objectKey = fileName
             await jobLogger.ainfo("Uploading to bucket", objectKey=objectKey)
+            
+            await job.updateProgress("bucketUpload")
             out_bytes = res["outputted_bytes"]
             s3.put_object(
                 Bucket=bucket,

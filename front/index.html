@@ -88,6 +88,15 @@
                 </form>
                 <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
                 <div id="message" class="message"></div>
+                <div id="progressContainer" class="progress-container" style="display:none;" aria-live="polite">
+                    <div class="progress-track">
+                        <div id="progressFill" class="progress-fill"></div>
+                    </div>
+                    <div class="progress-meta">
+                        <span id="progressStage">Waiting to upload...</span>
+                        <span id="progressLabel">0%</span>
+                    </div>
+                </div>
                 <div id="him">
                     <img src="./maxwell-cat.gif" alt="maxwell" id="maxwell">
                 </div>
