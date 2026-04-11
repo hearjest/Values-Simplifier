@@ -1,9 +1,14 @@
-FROM python:3.13.7-slim
+FROM python:3.13.5-slim
 WORKDIR /app
 
+RUN apt-get update && apt-get install -y \
+    ffmpeg \
+    nodejs \
+    npm \
+    && rm -rf /var/lib/apt/lists/*
+
 COPY back/worker/requirements.txt .
-RUN pip install  --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
+
 COPY back/worker/ .
-
-
-CMD ["python","worker.py"]
+CMD ["python", "worker.py"]

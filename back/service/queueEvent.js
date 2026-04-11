@@ -16,17 +16,27 @@ class queueEventEmits{
         queueEvents.on('completed', async ({ jobId, returnvalue }) => {
             loggy.info({jobId:jobId,jobStatus:'Completed'},`Job ${jobId} COMPLETED`)
             try{
-                jobRep.updateJob(returnvalue.original_path,returnvalue.path)
+                jobRep.updateJob(returnvalue.original_path,returnvalue.path,returnvalue.jobType)
             }catch(error){
                 loggy.error({jobId:jobId,jobStatus:'Failed to update DB',error:error},`Job ${jobId} DB updated failed`)
             }
             try{
                 await connection.del(`users:${returnvalue.userId}:urls`);
+                await connection.del(`users:${returnvalue.userId}:urls:img`);
+                await connection.del(`users:${returnvalue.userId}:urls:subs`);
+                await connection.del(`users:${returnvalue.userId}:urls:subtitle`);
             }catch(error){
                 loggy.error({jobId:jobId,jobStatus:"Failed to delete key in redis",error:error})
             }
             try{
-                io.to(`Job:${returnvalue.preProcessedPath}`).emit("completed",{jobId, url: returnvalue.url})
+                const roomId = returnvalue.videoId || returnvalue.preProcessedPath || jobId;
+                console.log("returnvalue", returnvalue.videoId);
+                io.to(`Job:${roomId}`).emit("completed", {
+                    jobId,
+                    url: returnvalue.url,
+                    videoId: returnvalue.videoId,
+                    oldFilePath: returnvalue.preProcessedPath,
+                })
             }catch(error){
                 loggy.error({jobId:jobId,jobStatus:'Failed to send completion status to socket',error:error},`Job ${jobId} completion notification socket failed`)
             }

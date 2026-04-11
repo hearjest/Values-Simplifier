@@ -43,7 +43,7 @@ class Job {
                 },
                 {
                     removeOnComplete: true,
-                    attempts: 3,
+                    attempts: 1,
                 });
             return { jobId: job.id };
         } catch (error) {
@@ -80,16 +80,17 @@ class Job {
         return url;
     }
 
-    async getImagesForUser(userId) {
+    async getImagesForUser(userId,jobType) {
         try {
             loggy.info({ userId: userId, method: "getImagesForUser" }, `Attempting to get files for user ${userId} via redis' cache`);
-            const cacheResult = await this.redis.getCachedUrls(`users:${userId}:urls`);
+            const cacheKey = `users:${userId}:urls:${jobType}`;
+            const cacheResult = await this.redis.getCachedUrls(cacheKey);
 
             if (cacheResult) {
                 return JSON.parse(cacheResult);
             } else {
                 loggy.info({ userId: userId, method: "getImagesForUser" }, `Cache missed`);
-                const paths = await this.jobRep.getJobsForUser(userId);
+                const paths = await this.jobRep.getJobsForUser(userId,jobType);
                 const urls = [];
                 let url = null;
                 const bucket = process.env.S3_BUCKET_NAME;
@@ -99,12 +100,13 @@ class Job {
                         if (exists) {
                             url = await this.s3PresignedGetUrl(bucket,paths[i]['processed_path']);
                             urls.push(url);
+                            console.log(url)
                         }
                     } catch (err) {
                         continue;
                     }
                 }
-                this.redis.set(`users:${userId}:urls`, JSON.stringify(urls), "EX", 600);
+                this.redis.set(cacheKey, JSON.stringify(urls), "EX", 600);
                 return urls;
             }
         } catch (error) {
@@ -118,7 +120,10 @@ class Job {
         if (hasFileDB && hasFileBucket) {
             await this.jobRep.removeFile(fileName);
             await this.s3RemoveObject(process.env.S3_BUCKET_NAME, fileName);
-            await this.redis.del(`users:${userId}:urls`); 
+            await this.redis.del(`users:${userId}:urls`);
+            await this.redis.del(`users:${userId}:urls:img`);
+            await this.redis.del(`users:${userId}:urls:subs`);
+            await this.redis.del(`users:${userId}:urls:subtitle`);
             return "success!";
         } else {
             return "failed";
@@ -146,6 +151,33 @@ class Job {
             loggy.warn({ userId: userId, fileName: fileName, e: e }, "Failed to upload file");
             return status;
         }
+    }
+
+    async putUrlInQueue(userId,url){
+        // const {userId,url}=fileDetails
+        const uuid = uuidv4();
+        const videoId=(url.split('v='))[1]
+        const newFileName=`${userId}-${videoId}-${uuid}`
+        const job = await dq.add('subtitle',
+            {newFilePath: "",
+                url: url,
+                uid: uuid,
+                userId: userId,
+                jobType: "subtitle",
+                videoId:videoId
+            },{
+                removeOnComplete: true,
+                attempts: 3,
+        });
+        await this.addInitialData(uuid,userId,url,newFileName)
+        
+        loggy.info({ userId: userId, function: 'createJob' }, "Adding job to bullmq queue");
+        return { jobId: job.id ,newFileName: newFileName,videoId:videoId};
+    }
+
+    async addInitialData(uuid,userId,originalname,newFilePath){
+        await this.jobRep.addJob(uuid, userId, originalname);
+        await this.jobRep.addMetaData(uuid, originalname, 'srt', userId, 1, newFilePath)
     }
     
 }

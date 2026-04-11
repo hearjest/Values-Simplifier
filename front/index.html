@@ -10,6 +10,17 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <header class="top-nav" aria-label="Main navigation">
+        <div class="top-nav-brand">Values-Simplifier</div>
+        <div class="top-nav-tabs" id="topNavTabs">
+            <button type="button" id="testTab" class="tab-btn active" aria-selected="true" onclick="switchTab('test')">Japanese Subtitle Generator For Youtube</button>
+            <button type="button" id="uploadTab" class="tab-btn" aria-selected="false" onclick="switchTab('upload')">Image Processing For Fun</button>
+        </div>
+        <div class="top-nav-actions">
+            <button type="button" id="logoutBtn" class="nav-logout">Logout</button>
+            <button type="button" id="themeToggle" class="theme-toggle" aria-label="Switch theme" aria-pressed="false">Light mode</button>
+        </div>
+    </header>
     <div id="THE-CAGE">
         <img src="./exploding-cat-cat-blowing-up.gif" alt="cat" id="THE-CREATURE">
     </div>
@@ -29,10 +40,6 @@
                     <label class="field" for="loginPassword">Password</label>
                     <input type="password" id="loginPassword" placeholder="Enter password" required autocomplete="current-password">
                     <div class="meta-row">
-                        <label class="remember">
-                            <input type="checkbox" id="rememberMe">
-                            <span>Remember me</span>
-                        </label>
                     </div>
                     <button type="submit">Sign in</button>
                 </form>
@@ -65,53 +72,115 @@
     <div id="uploadContainer" class="container" style="display:none;">
         <button type="button" id="funnybutton">funny button</button>
         <button type="button" id="sync">sync!</button>
-        <div class="header-with-logout">
-            <h1>File Upload</h1>
-            <button type="button" id="logoutBtn">Logout</button>
-        </div>
-        <div class="main-layout">
-            <div class="upload-section">
-                <form id="uploadForm" enctype="multipart/form-data">
-                    <div class="upload-area">
-                        <label for="fileInput" class="file-label">
-                            <span class="upload-text">Choose a file or drag it here</span>
-                        </label>
-                        <input type="file" id="fileInput" name="img" required accept=".jpg, .png, .webp">
+
+        <div id="uploadTabPanel" style="display:none;">
+            <div class="header-with-logout">
+                <h1>File Upload</h1>
+            </div>
+            <div class="main-layout">
+                <div class="upload-section">
+                    <form id="uploadForm" enctype="multipart/form-data">
+                        <div class="upload-area">
+                            <label for="fileInput" class="file-label">
+                                <span class="upload-text">Choose a file or drag it here</span>
+                            </label>
+                            <input type="file" id="fileInput" name="img" required accept=".jpg, .png, .webp">
+                        </div>
+                        <label for="method">Method:</label>
+                        <select id="method" name="method" required>
+                            <option value="kMeans">kMeans</option>
+                            <option value="pixelRearrange">Rearrange your image into The Cat</option>
+                            <option value="pixelRearrange2" selected>pixelRearrange2</option>
+                        </select>
+                        <button type="submit" class="upload-btn">Upload File</button>
+                    </form>
+                    <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
+                    <div id="message" class="message"></div>
+                    <div id="progressContainer" class="progress-container" style="display:none;" aria-live="polite">
+                        <div class="progress-track">
+                            <div id="progressFill" class="progress-fill"></div>
+                        </div>
+                        <div class="progress-meta">
+                            <span id="progressStage">Waiting to upload...</span>
+                            <span id="progressLabel">0%</span>
+                        </div>
                     </div>
-                    <label for="method">Method:</label>
-                    <select id="method" name="method" required>
-                        <option value="kMeans">kMeans</option>
-                        <option value="pixelRearrange">Rearrange your image into The Cat</option>
-                        <option value="pixelRearrange2" selected>pixelRearrange2</option>
-                    </select>
-                    <button type="submit" class="upload-btn">Upload File</button>
+                    <div id="him">
+                        <img src="./maxwell-cat.gif" alt="maxwell" id="maxwell">
+                    </div>
+                </div>
+                <div class="images-section">
+                    <h2>Processed Images</h2>
+                    <div id="imgBox"></div>
+                </div>
+            </div>
+        </div>
+
+<div id="testTabPanel" style="display:flex;">
+    <div class="yt-shell">
+        <div class="yt-left">
+            <div id="ytPlayer"></div>
+        </div>
+        <div class="yt-right">
+            <div class="yt-right-header">
+                <form id="srtFormTest">
+                    <label class="srt-upload-label">
+                        📂 Load local SRT
+                        <input type="file" id="srtFileInputTest" required accept=".srt">
+                    </label>
+                    <button type="submit">Load</button>
                 </form>
-                <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
-                <div id="message" class="message"></div>
-                <div id="progressContainer" class="progress-container" style="display:none;" aria-live="polite">
-                    <div class="progress-track">
-                        <div id="progressFill" class="progress-fill"></div>
-                    </div>
-                    <div class="progress-meta">
-                        <span id="progressStage">Waiting to upload...</span>
-                        <span id="progressLabel">0%</span>
-                    </div>
-                </div>
-                <div id="him">
-                    <img src="./maxwell-cat.gif" alt="maxwell" id="maxwell">
+                <form id="youtubeForm">
+                        <label for="youtubeUrl">YouTube URL:</label>
+                        <input
+                            type="url"
+                            id="youtubeUrl"
+                            name="youtubeUrl"
+                            placeholder="https://www.youtube.com/watch?v=..."
+                            required
+                        >
+                        <button type="submit" class="upload-btn">Submit YouTube URL</button>
+                    </form>
+                <div class="yt-list-users-subs">
+
                 </div>
             </div>
-            <div class="images-section">
-                <h2>Processed Images</h2>
-                <div id="imgBox"></div>
-            </div>
+            <div id="subsPan"></div>
         </div>
+    </div>
+</div>
+        <script>
+            function switchTab(tab) {
+                const uploadPanel = document.getElementById('uploadTabPanel');
+                const testPanel = document.getElementById('testTabPanel');
+                const uploadBtn = document.getElementById('uploadTab');
+                const testBtn = document.getElementById('testTab');
+
+                if (tab === 'test') {
+                    uploadPanel.style.display = 'none';
+                    testPanel.style.display = 'flex';
+                    uploadBtn.classList.remove('active');
+                    testBtn.classList.add('active');
+                    uploadBtn.setAttribute('aria-selected', 'false');
+                    testBtn.setAttribute('aria-selected', 'true');
+                } else {
+                    uploadPanel.style.display = 'block';
+                    testPanel.style.display = 'none';
+                    uploadBtn.classList.add('active');
+                    testBtn.classList.remove('active');
+                    uploadBtn.setAttribute('aria-selected', 'true');
+                    testBtn.setAttribute('aria-selected', 'false');
+                }
+            }
+        </script>
     </div>
 
     <script src="/socket.io/socket.io.js"></script>
     <script src="auth.js"></script>
     <script src="images.js"></script>
+    <script src="https://www.youtube.com/iframe_api"></script>
     <script src="upload.js"></script>
+
     <script src="cat.js"></script>
 </body>
 </html>

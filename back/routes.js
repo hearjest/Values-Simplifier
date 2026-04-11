@@ -60,7 +60,7 @@ function makeRoutes(auth,jobs,health){
 //-------------------------------------------
   routes.get('/getFiles', verifyToken, async (req,res)=>{
     req.log.info({userId:req.user.id}, 'Fetching user images');
-    const result=await jobs.getImagesForUser(req.user.id);
+    const result=await jobs.getImagesForUser(req.user.id,"img");
     req.log.info({userId:req.user.id, fileCount:result.length}, 'Images retrieved');
     res.json({message:"Files endpoint", user:req.user, result:result});
  })
@@ -78,7 +78,7 @@ function makeRoutes(auth,jobs,health){
  })
 
 
-//-------------------------------------------
+//------------------------------------------- for IMAGES
   routes.post('/upload',uploadLimiterrateLimit, verifyToken, async (req, res) => {
     try{
         const userId=req.user.id;
@@ -94,13 +94,41 @@ function makeRoutes(auth,jobs,health){
           "mimeType":req.body.mimeType,
           "size":req.body.size,
         })
-        console.log("routes",presigned.newPath)
         res.json({message:'Got presigned!',url:presigned.url,newFileName:presigned.newPath,uuid:presigned.uuid});
    }catch(e){
       req.log.error({err:e, userId:req.user?.id, fileName:req.body.fileName}, 'Upload failed');
       res.status(500).json({message:'Error uploading file'});
    }
  });
+
+
+//---------------------------------------------------- subtitles
+routes.post('/makeSubtitles', verifyToken, async (req, res) => {
+    try{
+        const userId=req.user.id;
+        if(!userId) {
+          req.log.error('User ID not found in token');
+          return res.status(401).json({message:'User ID not found in token'});
+       }
+        const url=req.body.url;
+        req.log.info({userId, url, fileSize:req.body.size}, 'Download started');
+        let job=await jobs.putUrlInQueue(
+          userId,
+          url
+        );
+        res.json({message:'Got presigned!',newFileName:job.newFileName,videoId:job.videoId});
+   }catch(e){
+      req.log.error({err:e, userId:req.user?.id, fileName:req.body.fileName}, 'Upload failed');
+      res.status(500).json({message:'Error uploading file'});
+   }
+ });
+
+ routes.get('/getSubs',verifyToken,async (req,res)=>{
+    req.log.info({userId:req.user.id}, 'Fetching user SUBS');
+    const result=await jobs.getImagesForUser(req.user.id,"subs");
+    req.log.info({userId:req.user.id, fileCount:result.length}, 'SUBS retrieved');
+    res.json({message:"Files endpoint", user:req.user, result:result});
+ })
 
 
 //-------------------------------------------
