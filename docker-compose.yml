@@ -58,6 +58,7 @@ services:
       MINIO_ROOT_USER: ${MINIO_ROOT_USER}
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET1: ${MINIO_BUCKET1:-processed}
+      HF_TOKEN: ${HF_TOKEN}
     depends_on:
       - redis
     volumes:
@@ -65,7 +66,7 @@ services:
       - ./temp:/app/temp
       - ./temp2:/app/temp2
     #command: python worker.py #remove the one below for nondev and reenable this
-    command: python -m watchfiles "python back/worker/worker.py" /app/back/worker 
+    command: python -m watchfiles "python back/worker/worker2.py" /app/back/worker 
     restart: unless-stopped
 
   postgres:

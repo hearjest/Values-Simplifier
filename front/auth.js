@@ -6,8 +6,48 @@ const authMessage = document.getElementById('authMessage');
 const showRegister = document.getElementById('showRegister');
 const showLogin = document.getElementById('showLogin');
 const logoutBtn = document.getElementById('logoutBtn');
+const themeToggle = document.getElementById('themeToggle');
+const THEME_STORAGE_KEY = 'ui-theme';
+
+initTheme();
 
 checkAuthStatus();
+
+function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme);
+
+    if (!themeToggle) {
+        return;
+    }
+
+    const nextThemeLabel = theme === 'dark' ? 'Light mode' : 'Dark mode';
+    themeToggle.textContent = nextThemeLabel;
+    themeToggle.setAttribute('aria-label', `Switch to ${nextThemeLabel.toLowerCase()}`);
+    themeToggle.setAttribute('aria-pressed', theme === 'light' ? 'true' : 'false');
+}
+
+function resolveInitialTheme() {
+    const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+    if (savedTheme === 'light' || savedTheme === 'dark') {
+        return savedTheme;
+    }
+    return 'dark';
+}
+
+function initTheme() {
+    applyTheme(resolveInitialTheme());
+
+    if (!themeToggle) {
+        return;
+    }
+
+    themeToggle.addEventListener('click', () => {
+        const currentTheme = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+        const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        applyTheme(nextTheme);
+        localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    });
+}
 
 async function checkAuthStatus() {
     try {
@@ -32,7 +72,12 @@ async function showUploadSection() {
     } else {
         authContainer.style.display = 'none';
     }
+    document.body.classList.add('app-state-upload');
     document.getElementById('uploadContainer').style.display = 'block';
+    if (typeof switchTab === 'function') {
+        switchTab('test');
+    }
+    await loadUsersSubs
     await loadUserImages();
 }
 
@@ -122,6 +167,7 @@ logoutBtn.addEventListener('click', async () => {
     } else {
         authContainer.style.display = 'block';
     }
+    document.body.classList.remove('app-state-upload');
     document.getElementById('uploadContainer').style.display = 'none';
 });
 

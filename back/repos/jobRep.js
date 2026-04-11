@@ -13,14 +13,16 @@ class jobRepo{
         return res.length > 0;
     }
 
-    async updateJob(original_Path,processed_Path){
-        let res = await this.sql`UPDATE jobs SET status=${'complete'}, processed_path=${processed_Path}, finished_at=now() WHERE original_path=${original_Path}`
+    async updateJob(original_Path,processed_Path,jobType){
+        const normalizedJobType = String(jobType);
+        let res = await this.sql`UPDATE jobs SET status=${'complete'}, processed_path=${processed_Path}, "jobType"=${normalizedJobType}, finished_at=now() WHERE original_path=${original_Path}`
         return res
         
     }
 
-    async getJobsForUser(userId){
-        let res = await this.sql`SELECT processed_path FROM jobs WHERE user_id = ${userId} ORDER BY created_at DESC LIMIT 50`
+    async getJobsForUser(userId,jobType){
+        const normalizedJobType = String(jobType);
+        let res = await this.sql`SELECT processed_path FROM jobs WHERE user_id = ${userId} AND "jobType"=${normalizedJobType} ORDER BY created_at DESC LIMIT 50`
         return res
     }
 

@@ -71,4 +71,18 @@ CREATE INDEX IF NOT EXISTS idx_filemetadata_userid ON filemetadata(userid);
 CREATE INDEX IF NOT EXISTS idx_filemetadata_created_at ON filemetadata(created_at DESC);
 CREATE INDEX IF NOT EXISTS idx_filemetadata_status ON filemetadata(status);
 
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'jobs'
+          AND column_name = 'jobType'
+    ) THEN
+        ALTER TABLE jobs
+            ADD COLUMN "jobType" TEXT;
+    END IF;
+END
+$$;
+
 COMMIT;

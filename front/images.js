@@ -1,4 +1,4 @@
-
+/* global loadUsersSubs */
 const closeUpBackground = document.getElementById('imgCloseUp');
 const closeUpImg = document.getElementById('closeUp');
 
@@ -101,6 +101,7 @@ getFilesBtn.addEventListener('click', loadUserImages);
 const syncButton = document.getElementById('sync');
 syncButton.addEventListener('click', async () => {
     await loadUserImages();
+    await loadUsersSubs();
 });
 
 async function deleteImg(link,container){
