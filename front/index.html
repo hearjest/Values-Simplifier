@@ -73,6 +73,17 @@
         <button type="button" id="funnybutton">funny button</button>
         <button type="button" id="sync">sync!</button>
 
+        <div id="message" class="message"></div>
+        <div id="progressContainer" class="progress-container" style="display:none;" aria-live="polite">
+            <div class="progress-track">
+                <div id="progressFill" class="progress-fill"></div>
+            </div>
+            <div class="progress-meta">
+                <span id="progressStage">Waiting...</span>
+                <span id="progressLabel">0%</span>
+            </div>
+        </div>
+
         <div id="uploadTabPanel" style="display:none;">
             <div class="header-with-logout">
                 <h1>File Upload</h1>
@@ -95,16 +106,6 @@
                         <button type="submit" class="upload-btn">Upload File</button>
                     </form>
                     <button type="button" id="getFilesBtn" class="upload-btn">Get Files</button>
-                    <div id="message" class="message"></div>
-                    <div id="progressContainer" class="progress-container" style="display:none;" aria-live="polite">
-                        <div class="progress-track">
-                            <div id="progressFill" class="progress-fill"></div>
-                        </div>
-                        <div class="progress-meta">
-                            <span id="progressStage">Waiting to upload...</span>
-                            <span id="progressLabel">0%</span>
-                        </div>
-                    </div>
                     <div id="him">
                         <img src="./maxwell-cat.gif" alt="maxwell" id="maxwell">
                     </div>

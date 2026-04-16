@@ -39,7 +39,8 @@ class Job {
                     originalFilePath: originalName,
                     uid: uuid,
                     userId: userId,
-                    jobType: jobType
+                    jobType: 'imageProcess',
+                    method: jobType
                 },
                 {
                     removeOnComplete: true,

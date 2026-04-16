@@ -189,6 +189,11 @@ function createSocketHandlers(socket, options = {}) {
         socket.off('failed', onFailed);
         socket.off('processBegin', onProcessBegin);
         socket.off('bucketUpload', onBucketUpload);
+        socket.off('downloadingVideo', onDownloadingVideo);
+        socket.off('extractedAudio', onExtractedAudio);
+        socket.off('Running model on audio', onRunningModel);
+        socket.off('creatingSubtitles', onCreatingSubtitles);
+        socket.off('uplaodedSubtitle', onUploadedSubtitle);
 
         console.log('[socket] disconnect');
         socket.disconnect();
@@ -232,10 +237,21 @@ function createSocketHandlers(socket, options = {}) {
         updateProgress(85, 'Uploading processed image...', 'working');
     };
 
+    const onDownloadingVideo = () => { updateProgress(30, 'Downloading video audio...', 'working'); };
+    const onExtractedAudio = () => { updateProgress(50, 'Audio extracted. Running transcription...', 'working'); };
+    const onRunningModel = () => { updateProgress(65, 'Transcribing with Whisper...', 'working'); };
+    const onCreatingSubtitles = () => { updateProgress(85, 'Creating subtitle file...', 'working'); };
+    const onUploadedSubtitle = () => { updateProgress(95, 'Uploading subtitles...', 'working'); };
+
     socket.on('completed', onCompleted);
     socket.on('failed', onFailed);
     socket.on('processBegin', onProcessBegin);
     socket.on('bucketUpload', onBucketUpload);
+    socket.on('downloadingVideo', onDownloadingVideo);
+    socket.on('extractedAudio', onExtractedAudio);
+    socket.on('Running model on audio', onRunningModel);
+    socket.on('creatingSubtitles', onCreatingSubtitles);
+    socket.on('uplaodedSubtitle', onUploadedSubtitle);
 
     return { closeSocket };
 }
