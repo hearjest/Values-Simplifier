@@ -19,3 +19,6 @@ test.js
 back/worker/cookies.txt
 back/worker/www.youtube.com_cookies.txt
 back/worker/www.youtube.com_cookies(1).txt
+.claude
+.devcontainer
+Claude_Chat_1776135078387.md

@@ -18,8 +18,6 @@ s3 = boto3.client(
 )
 import yt_dlp
 from faster_whisper import WhisperModel
-model_size = "tiny"
-model = WhisperModel(model_size, device="cpu", compute_type="int8")
 
 def hrMinSecMsConvertFromSec(seconds):
     hrs=int(seconds*(1/60)*(1/60))
@@ -49,8 +47,7 @@ async def processImage(job, token):
             jobId=job.id,
             bucket=bucket,
         )
-        jobType = job.data["jobType"]
-        processor = methodFactory.create(jobType)
+        processor = methodFactory.create(job.data["method"])
         await jobLogger.ainfo("Job processing")
         await job.updateProgress("processBegin")
         file = None
@@ -115,6 +112,8 @@ async def makeSubtitles(job):
     await job.updateProgress("downloadingVideo")
     url=job.data["url"]
     ydl_opts = {
+        'cookiefile': 'cookies.txt',
+        'verbose': True,
         'format': 'bestaudio/best',
         "outtmpl":"/tmp/%(id)s.%(ext)s",
         'postprocessors': [{
@@ -126,8 +125,8 @@ async def makeSubtitles(job):
                 'player_client': ['android_vr'],
             },
             'getpot_bgutil_http': {
-                'base_url': ['http://bgutil:4416'],
-            }
+                'base_url': [os.getenv('BGUTIL_URL', 'http://bgutil:4416')],
+            },
         },
         'compat_opts': set(),
         'http_headers': {},
@@ -139,8 +138,8 @@ async def makeSubtitles(job):
         downla =ydl.download([url])
         title="/tmp/"+id+".mp3"
     await job.updateProgress("extractedAudio")
-    model_size = "turbo"
-    model = WhisperModel(model_size, device="cpu", compute_type="default",use_auth_token=os.getenv('HF_TOKEN'))
+    model_size = "base"
+    model = WhisperModel(model_size, device="cpu", compute_type="default", use_auth_token=os.getenv('HF_TOKEN'), download_root='/app/models')
     await job.updateProgress("Running model on audio")
     segments, info = model.transcribe(title, beam_size=5,vad_filter=True,language="ja",task="transcribe")
     i=1;
@@ -197,7 +196,7 @@ async def makeSubtitles(job):
 async def main():
     shutdown_event = asyncio.Event()
     def signal_handler(sig, frame):
-        print("Signal received, shutting down.")
+        print(f"Signal {sig} ({signal.Signals(sig).name}) received, shutting down.")
         shutdown_event.set()
 
     signal.signal(signal.SIGTERM, signal_handler)
@@ -224,11 +223,12 @@ async def main():
     })
     print("Worker is online")
     
-    await shutdown_event.wait()
-
-    print("Cleaning up worker")
-    await worker.close()
-    print("Worker shut down successfully.")
+    try:
+        await shutdown_event.wait()
+    finally:
+        print("Cleaning up worker")
+        await worker.close()
+        print("Worker shut down successfully.")
 
 if __name__ == "__main__":
     asyncio.run(main())

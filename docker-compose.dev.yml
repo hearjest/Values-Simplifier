@@ -56,6 +56,7 @@ services:
       HF_TOKEN: ${HF_TOKEN}
     depends_on:
       - redis
+      - bgutil
     volumes:
       - .:/app
       - ./temp:/app/temp

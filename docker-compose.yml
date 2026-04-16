@@ -35,7 +35,7 @@ services:
       - .:/app #remove for nondev
       # - /app/node_modules #removed to prevent overwriting container dependencies
       - ./temp:/app/temp
-    command: npx nodemon back/server.js #remove for nondev
+    command: node back/server.js #remove for nondev
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/checkHealth', (r) => process.exit(r.statusCode === 200 ? 0 : 1))"]
@@ -59,8 +59,10 @@ services:
       MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
       MINIO_BUCKET1: ${MINIO_BUCKET1:-processed}
       HF_TOKEN: ${HF_TOKEN}
+      BGUTIL_URL: ${BGUTIL_URL}
     depends_on:
       - redis
+      - bgutil
     volumes:
       - .:/app
       - ./temp:/app/temp
@@ -89,6 +91,11 @@ services:
     volumes:
       - redisdata:/data
     restart: unless-stopped
+  
+  bgutil:
+    image: brainicism/bgutil-ytdlp-pot-provider:latest
+    ports:
+      - "4416:4416"
 
   # minio:
   #   image: minio/minio:latest
