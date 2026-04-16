@@ -77,11 +77,10 @@ async function showUploadSection() {
     if (typeof switchTab === 'function') {
         switchTab('test');
     }
-    await loadUsersSubs
+    await loadUsersSubs()
     await loadUserImages();
 }
 
-// Toggle between login and register forms
 showRegister.addEventListener('click', (e) => {
     e.preventDefault();
     loginForm.style.display = 'none';
