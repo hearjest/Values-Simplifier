@@ -132,24 +132,28 @@ routes.post('/makeSubtitles', verifyToken, async (req, res) => {
 
 
 //-------------------------------------------
-routes.post('/upload/job',verifyToken, async(req,res)=>{
-  const userId=req.user.id;
-  if(!userId) {
+routes.post('/upload/job', verifyToken, async(req, res) => {
+  const userId = req.user.id;
+  if (!userId) {
     req.log.error('User ID not found in token');
-    return res.status(401).json({message:'User ID not found in token'});
+    return res.status(401).json({message: 'User ID not found in token'});
   }
-  req.log.info({userId:userId},"JOB?!?!??!?!?!?!")
-  let job=await jobs.createJob(
-          userId,
-          req.body.fileName,
-          req.body.method,
-          req.body.uuid,
-          req.body.newFileName,
-          req.body.mimetype,
-          req.body.size
-        );
-        req.log.info({userId:userId, fileName:req.body.fileName, jobId:job.jobId}, 'Upload queued successfully');
-        res.json({message:'img in queue now', jobId:job.jobId});
+  try {
+    const job = await jobs.createJob(
+      userId,
+      req.body.fileName,
+      req.body.method,
+      req.body.uuid,
+      req.body.newFileName,
+      req.body.mimetype,
+      req.body.size
+    );
+    req.log.info({ userId, fileName: req.body.fileName, jobId: job.jobId }, 'Upload queued successfully');
+    res.json({ message: 'img in queue now', jobId: job.jobId });
+  } catch (error) {
+    req.log.error({ err: error, userId, fileName: req.body.fileName }, 'Failed to create job');
+    res.status(500).json({ message: 'Failed to queue job' });
+  }
 })
 
 

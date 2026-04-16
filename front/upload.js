@@ -132,9 +132,27 @@ function updateProgress(percent, stageText, state = 'working') {
     }
 }
 
+function completeWithImage(payload, closeSocket) {
+    const { url } = payload || {};
+    if (!url) {
+        message.textContent = 'Completed event payload is missing url';
+        setMessageState('error');
+        updateProgress(100, 'Failed', 'error');
+        closeSocket();
+        return;
+    }
+    const imgBox = document.getElementById('imgBox');
+    if (imgBox) {
+        addImgToBox(imgBox, url);
+    }
+    message.textContent = 'Image processed!';
+    setMessageState('success');
+    updateProgress(100, 'Completed', 'success');
+    closeSocket();
+}
+
 async function completeWithSubtitles(payload, closeSocket) {
     const { url, videoId } = payload || {};
-    console.log('[socket] completed payload', payload);
 
     if (!url || !videoId) {
         message.textContent = 'Completed event payload is missing url or videoId';
@@ -164,7 +182,6 @@ async function completeWithSubtitles(payload, closeSocket) {
         events: {
             onReady: () => {
                 const subs = parseSubs(srtText);
-                console.log(subs)
                 renderSubs(subs);
                 syncintervalID = syncToSubs(subs);
             },
@@ -187,15 +204,8 @@ function createSocketHandlers(socket, options = {}) {
 
         socket.off('completed', onCompleted);
         socket.off('failed', onFailed);
-        socket.off('processBegin', onProcessBegin);
-        socket.off('bucketUpload', onBucketUpload);
-        socket.off('downloadingVideo', onDownloadingVideo);
-        socket.off('extractedAudio', onExtractedAudio);
-        socket.off('Running model on audio', onRunningModel);
-        socket.off('creatingSubtitles', onCreatingSubtitles);
-        socket.off('uplaodedSubtitle', onUploadedSubtitle);
+        socket.off('progress', onProgress);
 
-        console.log('[socket] disconnect');
         socket.disconnect();
     };
 
@@ -208,7 +218,11 @@ function createSocketHandlers(socket, options = {}) {
                     finalPayload = maybePayload;
                 }
             }
-            await completeWithSubtitles(finalPayload, closeSocket);
+            if (finalPayload?.videoId) {
+                await completeWithSubtitles(finalPayload, closeSocket);
+            } else {
+                completeWithImage(finalPayload, closeSocket);
+            }
         } catch (error) {
             console.error('[socket] failed to handle completed event', error);
             message.textContent = 'An error occurred while finalizing the completed job';
@@ -225,33 +239,15 @@ function createSocketHandlers(socket, options = {}) {
         closeSocket();
     };
 
-    const onProcessBegin = () => {
-        message.textContent = 'Worker now processing image...';
-        setMessageState();
-        updateProgress(65, 'Worker processing image...', 'working');
+    const onProgress = ({ percent, message: msg }) => {
+        if (percent != null && msg != null) {
+            updateProgress(percent, msg, 'working');
+        }
     };
-
-    const onBucketUpload = () => {
-        message.textContent = 'Uploading your processed image to the cloud...';
-        setMessageState();
-        updateProgress(85, 'Uploading processed image...', 'working');
-    };
-
-    const onDownloadingVideo = () => { updateProgress(30, 'Downloading video audio...', 'working'); };
-    const onExtractedAudio = () => { updateProgress(50, 'Audio extracted. Running transcription...', 'working'); };
-    const onRunningModel = () => { updateProgress(65, 'Transcribing with Whisper...', 'working'); };
-    const onCreatingSubtitles = () => { updateProgress(85, 'Creating subtitle file...', 'working'); };
-    const onUploadedSubtitle = () => { updateProgress(95, 'Uploading subtitles...', 'working'); };
 
     socket.on('completed', onCompleted);
     socket.on('failed', onFailed);
-    socket.on('processBegin', onProcessBegin);
-    socket.on('bucketUpload', onBucketUpload);
-    socket.on('downloadingVideo', onDownloadingVideo);
-    socket.on('extractedAudio', onExtractedAudio);
-    socket.on('Running model on audio', onRunningModel);
-    socket.on('creatingSubtitles', onCreatingSubtitles);
-    socket.on('uplaodedSubtitle', onUploadedSubtitle);
+    socket.on('progress', onProgress);
 
     return { closeSocket };
 }
@@ -301,7 +297,7 @@ if (form) {
                 throw new Error('Could not get upload URL');
             }
 
-            updateProgress(20, 'Upload URL ready. Uploading file...', 'working');
+            
             const { url, newFileName, uuid } = await presignRes.json();
 
             const putRes = await fetch(url, {
@@ -315,9 +311,7 @@ if (form) {
 
             message.textContent = 'Upload success!';
             setMessageState();
-            updateProgress(45, 'Upload complete. Scheduling job...', 'working');
 
-            console.log('[socket] subTo', newFileName);
             socket.emit('subTo', newFileName);
 
             const method = document.getElementById('method');
@@ -340,8 +334,6 @@ if (form) {
             if (!queueRes.ok) {
                 throw new Error('Could not queue processing job');
             }
-
-            updateProgress(55, 'Job queued. Waiting for worker...', 'working');
         } catch {
             message.textContent = 'An error occurred while uploading the file';
             setMessageState('error');
@@ -412,7 +404,6 @@ if (youtubeForm && youtubeUrlInput) {
             setMessageState('success');
             updateProgress(55, 'Subtitle job queued.', 'working');
 
-            console.log('[socket] subTo', videoId);
             socket.emit('subTo', videoId);
             youtubeForm.reset();
         } catch {

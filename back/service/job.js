@@ -17,38 +17,32 @@ class Job {
      * 
      */
     async createJob(userId, originalName, method, uuid, newFilePath, mimeType, size) {
+        loggy.info({ userId, uuid, originalName, newFilePath, method, mimeType, size }, 'createJob called');
         try {
-            loggy.info({ userId: userId, function: 'createJob' }, "Writing file");
-            //await fs.writeFile(pathForStorage, fileBuffer);
             await this.jobRep.addMetaData(uuid, originalName, mimeType, userId, size, newFilePath);
-        } catch (error) {
-            loggy.error({ userId: userId, function: 'createJob', err: error }, "Error writing file metadata");
-        }
-        const jobType = method;
-        try {
-            loggy.info({ userId: userId, function: 'createJob' }, "Adding job to database");
+            loggy.info({ userId, uuid }, 'File metadata written');
+
             await this.jobRep.addJob(uuid, userId, originalName);
-        } catch (error) {
-            loggy.error({ userId: userId, function: 'createJob', err: error }, "Error Adding job to database");
-        }
-        try {
-            loggy.info({ userId: userId, function: 'createJob' }, "Adding job to bullmq queue");
+            loggy.info({ userId, uuid }, 'Job row inserted');
+
             const job = await dq.add('process-image',
                 {
-                    newFilePath: newFilePath,
+                    newFilePath,
                     originalFilePath: originalName,
                     uid: uuid,
-                    userId: userId,
+                    userId,
                     jobType: 'imageProcess',
-                    method: jobType
+                    method,
                 },
                 {
                     removeOnComplete: true,
                     attempts: 1,
                 });
+            loggy.info({ userId, uuid, bullmqJobId: job.id }, 'Job queued in BullMQ');
             return { jobId: job.id };
         } catch (error) {
-            loggy.error({ userId: userId, function: 'createJob', err: error }, "Error Adding job to database");
+            loggy.error({ userId, uuid, originalName, newFilePath, method, err: error }, 'createJob failed');
+            throw error;
         }
     }
 
