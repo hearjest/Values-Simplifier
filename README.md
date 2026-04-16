@@ -1,4 +1,82 @@
 # Values-Simplifier
+
+# Values Simplifier
+
+Web app with two features: a Japanese subtitle generator for YouTube videos, and an image processor.
+
+## Architecture
+
+Five services via Docker Compose:
+
+| Service | Stack |
+|---|---|
+| `app` | Node.js, Express, Socket.io, BullMQ, PostgreSQL |
+| `worker` | Python, faster-whisper, yt-dlp, ffmpeg |
+| `postgres` | PostgreSQL |
+| `redis` | Redis (BullMQ queue + cache) |
+| `bgutil` | `brainicism/bgutil-ytdlp-pot-provider` (YouTube PO token auth) |
+
+Storage: AWS S3 (or any S3-compatible provider).
+
+## Subtitle Generator
+
+1. User submits a YouTube URL
+2. Server enqueues a BullMQ job and joins the client to a Socket.io room keyed by video ID
+3. Worker downloads audio via yt-dlp, transcribes with faster-whisper (`large-v3-turbo`, Japanese, `vad_filter=True`)
+4. SRT file uploaded to S3; presigned URL sent to client via socket on completion
+5. Frontend embeds a YouTube iframe with a synced scrollable transcript panel. Clicking a subtitle line seeks the video.
+
+## Image Processor
+
+1. Client gets a presigned S3 PUT URL, uploads directly to S3
+2. Server enqueues a BullMQ job with the chosen processing method (`kMeans`, `pixelRearrange`, `pixelRearrange2`)
+3. Worker downloads from S3, runs the processor, uploads result back to S3
+4. Presigned GET URL returned to client via socket
+
+## Local Dev
+
+```bash
+cp .env.example .env  
+docker compose -f docker-compose.dev.yml up --build
+```
+
+App at `http://localhost:3000`. The dev compose uses `watchfiles` on the worker for hot reload.
+
+## Production
+
+Docker images: `binguslover/valuesimplifier:app`, `binguslover/valuesimplifier:worker`
+
+Deployed on Railway. The worker service requires a persistent volume at `/app/models` (≥3GB) for the Whisper model download.
+
+## File Structure
+
+```
+back/
+  comm/        Redis, S3, queue, and socket connections
+  repos/       PostgreSQL queries (users, jobs)
+  service/     Business logic: job orchestration, queue event handling
+  util/        JWT auth, rate limiters
+  worker/      Python BullMQ worker, faster-whisper transcription, image processors
+front/         HTML/CSS/JS (no framework)
+init.sql       Database schema
+Dockerfile.app
+Dockerfile.worker
+```
+
+## Environment Variables
+
+| Variable | Used by | Description |
+|---|---|---|
+| `POSTGRES_DB` / `POSTGRES_USER` / `POSTGRES_PASSWORD` | app, postgres | Database credentials |
+| `REDIS_HOST` / `REDIS_PORT` | app, worker | Redis connection |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_REGION` | app, worker | S3 credentials |
+| `S3_BUCKET_NAME` | app, worker | S3 bucket |
+| `HF_TOKEN` | worker | HuggingFace token for Whisper model download |
+| `BGUTIL_URL` | worker | bgutil server URL (default: `http://bgutil:4416`) |
+
+
+
+
 Hello. This program is a tool I've made to help me understand and keep track of values across an image when doing still-lifes. 
 Example:
 
