@@ -6,6 +6,9 @@ Web app with two features: a Japanese subtitle generator for YouTube videos, and
 
 ## Architecture
 
+![excalidraw for semi-simplified architecture](image.png)
+
+
 Five services via Docker Compose:
 
 | Service | Stack |
