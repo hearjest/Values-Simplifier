@@ -3,7 +3,7 @@ import signal
 from bullmq import Worker
 import shade_clustering as shade_clustering
 import os
-from dotenv import load_dotenv, dotenv_values 
+from dotenv import load_dotenv, dotenv_values
 import boto3
 from processMethodFactory import methodFactory
 import json
@@ -47,21 +47,29 @@ async def processImage(job, token):
             jobId=job.id,
             bucket=bucket,
         )
+        room_id = job.data["newFilePath"]
+        def p(event, percent, message):
+            return {"event": event, "percent": percent, "message": message, "roomId": room_id}
+
+        await job.updateProgress(p("Init", 0, "Init"))
         processor = methodFactory.create(job.data["method"])
         await jobLogger.ainfo("Job processing")
-        await job.updateProgress("processBegin")
+        await job.updateProgress(p("processBegin", 10, "Worker processing image"))
         file = None
         try:
             s3_obj = s3.get_object(Bucket=bucket, Key=job.data["newFilePath"])
+            await job.updateProgress(p("retrieveImg", 20, "Retrieving img from s3"))
             file = s3_obj['Body']
+            await job.updateProgress(p("readImg", 30, "Reading img"))
             blob = file.read()
+            await job.updateProgress(p("processImg", 50, "Processing img"))
             res = processor.process(blob)
             layer = "{}-{}"
             fileName = layer.format(job.data["newFilePath"], "processed")
             objectKey = fileName
             await jobLogger.ainfo("Uploading to bucket", objectKey=objectKey)
-            
-            await job.updateProgress("bucketUpload")
+
+            await job.updateProgress(p("bucketUpload", 75, "Uploading processed image"))
             out_bytes = res["outputted_bytes"]
             s3.put_object(
                 Bucket=bucket,
@@ -69,8 +77,9 @@ async def processImage(job, token):
                 Body=BytesIO(out_bytes),
                 ContentType=res.get("content_type", "image/png"),
             )
-            region = os.getenv("AWS_REGION")
+            await job.updateProgress(p("clean", 85, "Cleaning up"))
             s3.delete_object(Bucket=bucket,Key=job.data["newFilePath"])
+            await job.updateProgress(p("genPresigned", 95, "Generating presigned url"))
             presigned_url = s3.generate_presigned_url(
                 ClientMethod='get_object',
                 Params={'Bucket': bucket, 'Key': objectKey},
@@ -108,12 +117,17 @@ async def makeSubtitles(job):
         jobId=job.id,
         bucket=bucket,
     )
+    room_id = job.data["videoId"]
+    def p(event, percent, message):
+        return {"event": event, "percent": percent, "message": message, "roomId": room_id}
+
+    await job.updateProgress(p("init", 0, "Init"))
     await jobLogger.ainfo("Job processing")
-    await job.updateProgress("downloadingVideo")
+    await job.updateProgress(p("workerReceivedJob", 10, "Worker has begun job"))
     url=job.data["url"]
     ydl_opts = {
         'cookiefile': 'cookies.txt',
-        'verbose': True,
+        'verbose': False,
         'format': 'bestaudio/best',
         "outtmpl":"/tmp/%(id)s.%(ext)s",
         'postprocessors': [{
@@ -131,20 +145,19 @@ async def makeSubtitles(job):
         'compat_opts': set(),
         'http_headers': {},
 }
-    title=''
     id=(url.split('v='))[1]
+    title="/tmp/"+id+".mp3"
+    await job.updateProgress(p("downloadingVideo", 20, "Beginning download and audio extraction"))
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-        ins=ydl.extract_info(url,download=False)
-        downla =ydl.download([url])
-        title="/tmp/"+id+".mp3"
-    await job.updateProgress("extractedAudio")
-    model_size = "base"
+        ydl.download([url])
+    await job.updateProgress(p("extractedAudio", 40, "Audio extracted. Running transcription"))
+    model_size = "large-v3-turbo"
     model = WhisperModel(model_size, device="cpu", compute_type="default", use_auth_token=os.getenv('HF_TOKEN'), download_root='/app/models')
-    await job.updateProgress("Running model on audio")
+    await job.updateProgress(p("runningModel", 55, "Transcribing with Whisper"))
     segments, info = model.transcribe(title, beam_size=5,vad_filter=True,language="ja",task="transcribe")
     i=1;
     subs=[]
-    await job.updateProgress("creatingSubtitles")
+    await job.updateProgress(p("creatingSubtitles", 80, "Creating subtitle file"))
     for segment in segments:
         timeStart=hrMinSecMsConvertFromSec(segment.start);
         timeEnd=hrMinSecMsConvertFromSec(segment.end)
@@ -157,20 +170,22 @@ async def makeSubtitles(job):
     bodyByte=body.encode('utf-8')
     with open(srtFileName,"w",encoding="utf-8") as f:
         f.write(body)
+    await job.updateProgress(p("uploadedSubtitle", 90, "Uploading subtitles"))
     s3.put_object(
                 Bucket=bucket,
                 Key=srtFileName,
                 Body=BytesIO(bodyByte),
                 ContentType="text/plain; charset=utf-8",
             )
-    await job.updateProgress("uplaodedSubtitle")
+    await job.updateProgress(p("getPresigned", 95, "Getting presigned url"))
     presigned_url = s3.generate_presigned_url(
                 ClientMethod='get_object',
                 Params={'Bucket': bucket, 'Key': srtFileName},
                 ExpiresIn=900
             ) 
-    if(os.path.exists(title)):
+    if os.path.exists(srtFileName):
         os.remove(srtFileName)
+    if os.path.exists(title):
         os.remove(title)
     result = {
         "status": "completed",
@@ -182,7 +197,7 @@ async def makeSubtitles(job):
         "path":srtFileName,
         "videoId":job.data["videoId"],
         "jobType":"subs"
-    } 
+    }
     return result
 
 

@@ -18,7 +18,6 @@ class generalAuth{
                 return null
             }
             const tokenPayload = {id: user.id, userName: user.name};
-            console.log('Login - creating token with payload:', tokenPayload);
             const token = generateToken(tokenPayload)
             return {result: user, token}
         }catch(error){

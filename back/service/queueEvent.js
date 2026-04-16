@@ -14,12 +14,20 @@ class queueEventEmits{
             loggy.info({jobId:jobId,jobStatus:'Waiting'},`Job ${jobId} WAITING`)
         });
         queueEvents.on('completed', async ({ jobId, returnvalue }) => {
-            loggy.info({jobId:jobId,jobStatus:'Completed'},`Job ${jobId} COMPLETED`)
+            loggy.info({jobId,jobStatus:'Completed'},`Job ${jobId} COMPLETED`)
             const result = typeof returnvalue === 'string' ? JSON.parse(returnvalue) : returnvalue;
+            console.log("result",result)
             try{
                 await jobRep.updateJob(result.original_path,result.path,result.jobType)
             }catch(error){
-                loggy.error({jobId:jobId,jobStatus:'Failed to update DB',error:error},`Job ${jobId} DB updated failed`)
+                loggy.error({
+                    jobId,
+                    jobStatus: 'Failed to update DB',
+                    original_path: result.original_path,
+                    processed_path: result.path,
+                    jobType: result.jobType,
+                    error
+                }, `Job ${jobId} DB update failed`)
             }
             try{
                 await connection.del(`users:${result.userId}:urls`);
@@ -31,7 +39,6 @@ class queueEventEmits{
             }
             try{
                 const roomId = result.videoId || result.preProcessedPath || jobId;
-                console.log("returnvalue", result.videoId);
                 io.to(`Job:${roomId}`).emit("completed", {
                     jobId,
                     url: result.url,
@@ -49,13 +56,11 @@ class queueEventEmits{
             io.to(`Job:${jobId}`).emit("failed",{jobId})
         });
 
-        queueEvents.on(
-            'progress',
-            ({ jobId, data }) => {
-            console.log(`Queue Emitter: Job ${jobId} progress: ${data}`);
-            io.to(`Job:${jobId}`).emit(data,{jobId})
-            },
-            );
+        queueEvents.on('progress', ({ jobId, data }) => {
+            const payload = typeof data === 'string' ? { event: data, percent: null, message: data } : data;
+            const roomId = payload.roomId || jobId;
+            io.to(`Job:${roomId}`).emit('progress', { jobId, ...payload });
+        });
         }
 
         async close() {
