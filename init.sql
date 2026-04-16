@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     started_at TIMESTAMP WITH TIME ZONE,
     finished_at TIMESTAMP WITH TIME ZONE,
-    error TEXT,
+    jobType TEXT,
     CONSTRAINT jobs_user_id_fkey FOREIGN KEY (user_id) 
         REFERENCES users(id) ON DELETE CASCADE
 );

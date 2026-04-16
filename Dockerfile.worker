@@ -10,5 +10,6 @@ RUN apt-get update && apt-get install -y \
 COPY back/worker/requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
+
 COPY back/worker/ .
-CMD ["python", "worker.py"]
+CMD ["python", "worker2.py"]
