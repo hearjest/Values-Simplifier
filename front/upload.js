@@ -275,8 +275,7 @@ if (form) {
 
         setMessageState();
         message.textContent = 'Preparing upload...';
-        updateProgress(5, 'Preparing upload...', 'working');
-
+        updateProgress(0, 'Begin upload', 'working');
         // eslint-disable-next-line
         const socket = io();
         const { closeSocket } = createSocketHandlers(socket);
@@ -361,7 +360,6 @@ if (youtubeForm && youtubeUrlInput) {
 
         setMessageState();
         message.textContent = 'Submitting YouTube URL...';
-        updateProgress(15, 'Valid URL. Queueing subtitle job...', 'working');
 
         try {
             const queueRes = await fetch('/api/makeSubtitles', {
@@ -402,7 +400,6 @@ if (youtubeForm && youtubeUrlInput) {
 
             message.textContent = 'YouTube subtitle job queued';
             setMessageState('success');
-            updateProgress(55, 'Subtitle job queued.', 'working');
 
             socket.emit('subTo', videoId);
             youtubeForm.reset();
@@ -426,7 +423,6 @@ if (srtFormTest && srtFileInputTest) {
 
             setMessageState();
             message.textContent = 'Loading local SRT...';
-            updateProgress(20, 'Reading local SRT...', 'working');
 
             const srtFile = srtFileInputTest.files[0];
             const videoId = extractVideoIdFromSrtFileName(srtFile.name);
@@ -442,7 +438,6 @@ if (srtFormTest && srtFileInputTest) {
                 ytPlayer.destroy();
             }
 
-            updateProgress(70, 'Initializing player with local subtitles...', 'working');
             ytPlayer = new YT.Player('ytPlayer', {
                 videoId,
                 events: {
@@ -538,7 +533,6 @@ function addSubsEntry(link){
 
             setMessageState();
             message.textContent = 'Loading selected subtitles...';
-            updateProgress(30, 'Downloading selected SRT...', 'working');
 
             const response = await fetch(selectedOption.value);
             if (!response.ok) {
@@ -555,7 +549,6 @@ function addSubsEntry(link){
                 ytPlayer.destroy();
             }
 
-            updateProgress(75, 'Initializing player...', 'working');
             ytPlayer = new YT.Player('ytPlayer', {
                 videoId: selectedOption.dataset.videoId || '',
                 events: {
